@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>AUDITORIA SUPREMA · USP · SYNAPSE HUB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --diamond: #b9f2ff;
+            --primary: #00e5ff;
+            --bg: #030308;
+            --surface: rgba(12, 12, 30, 0.9);
+        }
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .header {
+            position: fixed; top: 40px; text-align: center;
+        }
+        .header h1 {
+            font-family: 'Orbitron'; font-size: 24px; letter-spacing: 10px; color: var(--primary);
+            text-shadow: 0 0 20px var(--primary); margin: 0;
+        }
+        .header p { font-size: 10px; letter-spacing: 5px; opacity: 0.6; margin-top: 10px; }
+
+        .container {
+            width: 80%; max-width: 900px; background: var(--surface);
+            border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 20px;
+            padding: 40px; text-align: center; backdrop-filter: blur(20px);
+            box-shadow: 0 0 100px rgba(0, 229, 255, 0.1);
+        }
+
+        .auth-box {
+            border: 1px solid var(--primary); padding: 20px; border-radius: 10px;
+            display: inline-block; margin-bottom: 30px; background: rgba(0, 229, 255, 0.05);
+        }
+        .token { font-family: monospace; font-size: 20px; color: var(--diamond); }
+
+        .btn-launch {
+            background: transparent; border: 2px solid var(--primary);
+            color: var(--primary); padding: 15px 40px; font-family: 'Orbitron';
+            font-size: 16px; cursor: pointer; border-radius: 50px;
+            transition: all 0.3s; text-decoration: none; display: inline-block;
+        }
+        .btn-launch:hover { background: var(--primary); color: #000; box-shadow: 0 0 40px var(--primary); }
+
+        .metrics {
+            display: flex; justify-content: center; gap: 50px; margin-top: 40px;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;
+        }
+        .m-item { display: flex; flex-direction: column; }
+        .m-val { font-size: 24px; font-weight: 600; color: var(--primary); }
+        .m-lbl { font-size: 9px; opacity: 0.5; text-transform: uppercase; letter-spacing: 2px; }
+
+        .zkp-badge {
+            position: fixed; bottom: 40px; right: 40px;
+            background: rgba(0, 255, 65, 0.1); border: 1px solid #00ff41;
+            padding: 10px 20px; border-radius: 5px; font-size: 10px;
+            color: #00ff41; font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AUDITORIA SUPREMA</h1>
+        <p>USP · ESALQ · SÃO CARLOS · 2026</p>
+    </div>
+
+    <div class="container">
+        <div class="auth-box">
+            <div style="font-size: 10px; margin-bottom: 10px; opacity: 0.7;">TOKEN DE ACESSO SOBERANO</div>
+            <div class="token">DALILA_USP_01</div>
+        </div>
+
+        <h2 style="font-size: 32px; margin-bottom: 20px;">Bem-vinda, Dra. <span>Dalila</span></h2>
+        <p style="opacity: 0.8; line-height: 1.6; margin-bottom: 40px;">
+            O ecossistema Synapse Hub está pronto para a auditoria final. <br>
+            Todos os ativos biotecnológicos, relatórios Verra e telemetria de fauna <br>
+            foram selados em Sincronia Diamante para sua revisão.
+        </p>
+
+        <a href="redoma_v6_ultrathink.html?token=DALILA_USP_01" class="btn-launch">ENTRAR NA REDOMA V6</a>
+
+        <div class="metrics">
+            <div class="m-item">
+                <div class="m-val">100%</div>
+                <div class="m-lbl">INTEGRIDADE</div>
+            </div>
+            <div class="m-item">
+                <div class="m-val">0.000</div>
+                <div class="m-lbl">ENTROPIA</div>
+            </div>
+            <div class="m-item">
+                <div class="m-val">92x</div>
+                <div class="m-lbl">COMPRESSÃO</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="zkp-badge">
+        [✓] PROVA ZKP ASSINADA PELO ORÁCULO GAMMA
+    </div>
+
+    <script>
+        // Background effect logic could go here
+    </script>
+</body>
+</html>

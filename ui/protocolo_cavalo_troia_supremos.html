@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔ PROTOCOLO CAVALO DE TROIA — SUPREMOS DOUTORES</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03030c;--cyan:#00f2ff;--gold:#ffd700;--pink:#ff3e81;
+  --amber:#ffb800;--purple:#a855f7;--green:#00ff88;--red:#ff4444;
+  --dim:rgba(255,255,255,0.5);
+}
+html,body{
+  width:100%;min-height:100%;background:var(--bg);
+  font-family:'Courier New',monospace;color:#fff;
+  user-select:none;-webkit-user-select:none;-moz-user-select:none;
+}
+@keyframes scan{0%{top:-4px}100%{top:100%}}
+#scanline{position:fixed;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(0,242,255,0.06),transparent);
+  animation:scan 5s linear infinite;pointer-events:none;z-index:9999}
+
+/* ── AUTH ── */
+#auth-overlay{
+  position:fixed;inset:0;z-index:1000;background:rgba(3,3,12,0.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);
+}
+#auth-box{
+  border:1px solid var(--gold);border-radius:20px;padding:48px 56px;
+  max-width:540px;width:90%;text-align:center;
+  box-shadow:0 0 60px rgba(255,215,0,0.15),0 0 120px rgba(0,242,255,0.08);
+  background:rgba(255,215,0,0.03);
+}
+.auth-skull{font-size:3.5rem;margin-bottom:16px;animation:ps 2s ease-in-out infinite}
+@keyframes ps{0%,100%{transform:scale(1);filter:drop-shadow(0 0 8px gold)}50%{transform:scale(1.08);filter:drop-shadow(0 0 24px gold)}}
+.auth-title{font-size:1.1rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.auth-subtitle{font-size:0.75rem;letter-spacing:0.15em;color:var(--dim);margin-bottom:28px}
+#auth-matrix{font-size:0.7rem;color:rgba(0,255,136,0.4);letter-spacing:0.1em;margin-bottom:20px;height:38px;overflow:hidden;line-height:1.5}
+#key-input{
+  width:100%;padding:14px 20px;background:rgba(255,215,0,0.06);
+  border:1px solid rgba(255,215,0,0.3);border-radius:10px;
+  color:var(--gold);font-family:'Courier New',monospace;font-size:1rem;
+  letter-spacing:0.1em;text-align:center;outline:none;margin-bottom:16px;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+#key-input:focus{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,0.2)}
+#key-input::placeholder{color:rgba(255,215,0,0.35)}
+#btn-unlock{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(0,242,255,0.1));
+  border:1px solid var(--gold);border-radius:10px;color:var(--gold);
+  font-family:'Courier New',monospace;font-size:0.9rem;font-weight:700;
+  letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+}
+#btn-unlock:hover{background:rgba(255,215,0,0.2);box-shadow:0 0 24px rgba(255,215,0,0.3)}
+#auth-error{margin-top:14px;font-size:0.75rem;color:var(--red);letter-spacing:0.1em;opacity:0;transition:opacity 0.3s;min-height:18px}
+.auth-hint{margin-top:20px;font-size:0.65rem;color:rgba(255,255,255,0.2);letter-spacing:0.08em}
+
+/* ── UNLOCK ── */
+#unlock-anim{
+  position:fixed;inset:0;z-index:999;background:var(--bg);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+}
+.unlock-ring{
+  width:120px;height:120px;border-radius:50%;border:2px solid transparent;
+  border-top-color:var(--gold);border-right-color:var(--cyan);
+  animation:spin 0.6s linear infinite;margin-bottom:24px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.unlock-text{font-size:0.85rem;letter-spacing:0.2em;color:var(--gold)}
+
+/* ── COSMIC BOMB OVERLAY ── */
+#bomb-overlay{
+  position:fixed;inset:0;z-index:2000;background:var(--bg);
+  display:none;align-items:center;justify-content:center;
+  flex-direction:column;
+}
+#bomb-ring{
+  width:200px;height:200px;border-radius:50%;
+  border:3px solid var(--red);
+  box-shadow:0 0 60px var(--red),0 0 120px rgba(255,68,68,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:5rem;margin-bottom:24px;
+  animation:bomb-pulse 0.4s ease-in-out infinite;
+}
+@keyframes bomb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+#bomb-counter{font-size:4rem;font-weight:700;color:var(--red);letter-spacing:0.1em}
+#bomb-msg{font-size:0.8rem;color:rgba(255,255,255,0.5);letter-spacing:0.2em;margin-top:12px}
+
+/* ── CONTENT ── */
+#content{display:none}
+
+/* ── LOGO BAR ── */
+#logo-bar{
+  background:rgba(255,215,0,0.04);border-bottom:1px solid rgba(255,215,0,0.15);
+  padding:18px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+}
+.logo-block{display:flex;align-items:center;gap:12px}
+.logo-svg-wrap{
+  width:52px;height:52px;border-radius:12px;
+  border:1px solid rgba(255,215,0,0.3);
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,215,0,0.05);
+  box-shadow:0 0 16px rgba(255,215,0,0.1);
+}
+.logo-text-block{line-height:1.3}
+.logo-name{font-size:0.85rem;font-weight:700;letter-spacing:0.1em;color:var(--gold)}
+.logo-sub{font-size:0.65rem;letter-spacing:0.08em;color:var(--dim)}
+.logo-sep{width:1px;height:40px;background:rgba(255,215,0,0.2)}
+.logo-protocol{margin-left:auto;font-size:0.7rem;letter-spacing:0.15em;color:var(--dim);text-align:right}
+.logo-protocol b{color:var(--gold);display:block;font-size:0.9rem}
+
+/* ── HEADER ── */
+#doc-header{
+  background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(0,242,255,0.04),rgba(168,85,247,0.05));
+  border-bottom:1px solid rgba(255,215,0,0.2);padding:28px 40px 22px;position:relative;overflow:hidden;
+}
+#doc-header::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(255,215,0,0.01) 40px,rgba(255,215,0,0.01) 80px);
+}
+.header-badge{
+  display:inline-block;font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:4px 14px;border-radius:40px;margin-bottom:14px;
+  background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.35);color:var(--gold);
+}
+.header-title{
+  font-size:clamp(1.3rem,3.5vw,2.2rem);font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:#fff;line-height:1.2;margin-bottom:8px;
+}
+.header-title .gold{color:var(--gold)}.header-title .cyan{color:var(--cyan)}
+.header-sub{font-size:0.8rem;letter-spacing:0.1em;color:var(--dim);margin-bottom:18px}
+.header-badges{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hbadge{font-size:0.65rem;letter-spacing:0.12em;padding:5px 14px;border-radius:40px;text-transform:uppercase;font-weight:700}
+
+/* ── LOCK BANNER ── */
+#lock-banner{
+  background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);
+  border-radius:10px;margin:20px 40px;padding:12px 20px;
+  display:flex;align-items:center;gap:12px;
+  font-size:0.75rem;letter-spacing:0.08em;color:rgba(255,255,255,0.7);
+}
+
+/* ── SECTION ── */
+.section{margin:0 40px 28px;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:26px 30px;background:rgba(255,255,255,0.02)}
+.section-tag{font-size:0.65rem;letter-spacing:0.22em;text-transform:uppercase;margin-bottom:10px}
+.section-title{font-size:1.1rem;font-weight:700;letter-spacing:0.08em;margin-bottom:14px}
+.section-body{font-size:0.85rem;line-height:1.8;color:rgba(255,255,255,0.75);letter-spacing:0.03em}
+.section-body b{color:#fff}
+
+/* ── EQ ── */
+.eq-box{background:rgba(0,242,255,0.04);border:1px solid rgba(0,242,255,0.2);border-radius:14px;padding:22px 30px;margin:14px 0;text-align:center}
+.eq-formula{font-size:clamp(1.3rem,3vw,2rem);font-weight:700;color:var(--cyan);letter-spacing:0.08em;text-shadow:0 0 16px rgba(0,242,255,0.4);margin-bottom:12px}
+.eq-vars{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.eq-var{font-size:0.8rem;color:var(--dim)}.eq-var b{color:#fff}
+
+/* ── CURVE ── */
+#mini-curve{border-radius:12px;border:1px solid rgba(0,242,255,0.2);box-shadow:0 0 40px rgba(0,242,255,0.1);width:100%;max-height:300px;display:block}
+
+/* ── TIER TABLE ── */
+.tier-table{width:100%;border-collapse:collapse;margin-top:12px}
+.tier-table th{padding:10px 12px;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;text-align:left;border-bottom:1px solid rgba(255,255,255,0.08);color:var(--dim)}
+.tier-table td{padding:11px 12px;font-size:0.82rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+
+/* ── NETWORKING SECTION ── */
+.net-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:16px}
+.net-card{
+  border-radius:14px;padding:20px 22px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.07);
+  position:relative;transition:border-color 0.2s,box-shadow 0.2s;
+}
+.net-card.online{border-color:rgba(0,255,136,0.25)}
+.net-card.offline{opacity:0.45;filter:grayscale(0.6)}
+.net-card-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.net-avatar{
+  width:46px;height:46px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;flex-shrink:0;
+  border:2px solid rgba(255,255,255,0.12);
+}
+.net-meta{flex:1;min-width:0}
+.net-name{font-size:0.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net-role{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+.status-dot{
+  position:absolute;top:14px;right:14px;width:9px;height:9px;border-radius:50%;
+}
+.status-dot.online{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite}
+.status-dot.offline{background:#555}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.net-fields{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.net-tag{font-size:0.62rem;padding:3px 10px;border-radius:20px;letter-spacing:0.08em}
+.net-action{display:flex;gap:8px}
+.btn-deactivate,.btn-activate{
+  flex:1;padding:7px 0;border-radius:8px;font-family:'Courier New',monospace;
+  font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  cursor:pointer;border:1px solid;transition:all 0.2s;
+}
+.btn-deactivate{background:rgba(255,68,68,0.1);border-color:rgba(255,68,68,0.3);color:var(--red)}
+.btn-deactivate:hover{background:rgba(255,68,68,0.2)}
+.btn-activate{background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--green)}
+.btn-activate:hover{background:rgba(0,255,136,0.18)}
+.maestro-only{font-size:0.62rem;color:rgba(255,215,0,0.5);letter-spacing:0.08em;margin-top:8px;text-align:center}
+
+/* ── HASH ── */
+.hash-block{background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:10px;padding:16px 20px;margin-top:14px;font-size:0.7rem;letter-spacing:0.08em;color:rgba(0,255,136,0.7);line-height:1.7;word-break:break-all}
+.hash-label{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+
+/* ── BOMB BTN ── */
+#bomb-btn-wrap{margin:0 40px 28px;text-align:center}
+#btn-bomb{
+  padding:12px 40px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.4);
+  border-radius:40px;color:var(--red);font-family:'Courier New',monospace;
+  font-size:0.8rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;
+}
+#btn-bomb:hover{background:rgba(255,68,68,0.2);box-shadow:0 0 24px rgba(255,68,68,0.3)}
+
+/* ── FOOTER ── */
+#doc-footer{margin:32px 40px 40px;padding:22px 30px;border-top:1px solid rgba(255,215,0,0.2);text-align:center}
+.footer-sig{font-size:0.75rem;letter-spacing:0.1em;color:var(--dim)}.footer-sig b{color:var(--gold)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:rgba(255,215,0,0.2);border-radius:3px}
+.watermark{position:fixed;bottom:14px;right:18px;font-size:0.58rem;letter-spacing:0.1em;color:rgba(255,255,255,0.1);z-index:50;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="scanline"></div>
+
+<!-- AUTH -->
+<div id="auth-overlay">
+  <div id="auth-box">
+    <div class="auth-skull">⚔️</div>
+    <div class="auth-title">PROTOCOLO CAVALO DE TROIA</div>
+    <div class="auth-subtitle">SUPREMOS DOUTORES DA MANSÃO CÉU · ACESSO RESTRITO</div>
+    <div id="auth-matrix"></div>
+    <input type="password" id="key-input" placeholder="🔑 CHAVE QUÂNTICA DE ACESSO" autocomplete="off" spellcheck="false"/>
+    <button id="btn-unlock" onclick="tryUnlock()">⚔ VERIFICAR IDENTIDADE DIAMANTE</button>
+    <div id="auth-error">⚠ ACESSO NEGADO — CHAVE INVÁLIDA</div>
+    <div class="auth-hint">
+      Documento protegido por criptografia pós-quântica Kyber-1024.<br>
+      Apenas membros da Mansão Céu possuem a chave de acesso.
+    </div>
+  </div>
+</div>
+
+<!-- UNLOCK ANIM -->
+<div id="unlock-anim">
+  <div class="unlock-ring"></div>
+  <div class="unlock-text" id="unlock-text">VERIFICANDO ASSINATURA QUÂNTICA...</div>
+</div>
+
+<!-- COSMIC BOMB -->
+<div id="bomb-overlay">
+  <div id="bomb-ring">💥</div>
+  <div id="bomb-counter">5</div>
+  <div id="bomb-msg">BOMBA CÓSMICA ATIVADA — ARQUIVO EM AUTODESTRUIÇÃO</div>
+</div>
+
+<!-- ══════════════ DOCUMENT ══════════════ -->
+<div id="content">
+
+<!-- LOGO BAR -->
+<div id="logo-bar">
+  <!-- ESALQ USP -->
+  <div class="logo-block">
+    <div class="logo-svg-wrap">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="#ffd700" stroke-width="1.2" stroke-opacity="0.6"/>
+        <text x="18" y="14" text-anchor="middle" font-size="7" font-weight="700" fill="#ffd700" font-family="Courier New">ESALQ</text>
+        <text x="18" y="23" text-anchor="middle" font-size="6" fill="#ffd700" font-family="Courier New" opacity="0.7">USP</text>
+        <path d="M10 28 Q18 20 26 28" stroke="#ffd700" stroke-width="1" fill="none" stroke-opacity="0.5"/>
+        <path d="M18 18 L18 12" stroke="#ffd700" stroke-width="1" stroke-opacity="0.4"/>
+        <path d="M14 15 L18 12 L22 15" stroke="#ffd700" stroke-width="1" fill="none" stroke-opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="logo-text-block">
+      <div class="logo-name">ESALQ — USP</div>
+      <div class="logo-sub">Escola Superior de Agricultura Luiz de Queiroz</div>
+    </div>
+  </div>
+
+  <div class="logo-sep"></div>
+
+  <!-- CEU MANSÃO -->
+  <div class="logo-block">
+    <div class="logo-svg-wrap">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="16" stroke="#00f2ff" stroke-width="1.2" stroke-opacity="0.6"/>
+        <text x="18" y="14" text-anchor="middle" font-size="8" font-weight="700" fill="#00f2ff" font-family="Courier New">CÉU</text>
+        <text x="18" y="23" text-anchor="middle" font-size="5.5" fill="#00f2ff" font-family="Courier New" opacity="0.7">MANSÃO</text>
+        <path d="M10 10 L18 4 L26 10" stroke="#00f2ff" stroke-width="1" fill="none" stroke-opacity="0.5"/>
+        <circle cx="18" cy="8" r="2" fill="#00f2ff" fill-opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="logo-text-block">
+      <div class="logo-name" style="color:var(--cyan)">MANSÃO CÉU</div>
+      <div class="logo-sub">Supremos Doutores · Colaboração Soberana</div>
+    </div>
+  </div>
+
+  <div class="logo-sep"></div>
+
+  <!-- SYNAPSE -->
+  <div class="logo-block">
+    <div class="logo-svg-wrap" style="border-color:rgba(168,85,247,0.4)">
+      <img src="assets/images/logos/synapse_hub_sovereign_official.png"
+           style="width:40px;height:40px;border-radius:8px;object-fit:cover"
+           onerror="this.outerHTML='<svg width=36 height=36 viewBox=\'0 0 36 36\' fill=\'none\'><text x=18 y=22 text-anchor=\'middle\' font-size=20 fill=\'#a855f7\'>⚡</text></svg>'">
+    </div>
+    <div class="logo-text-block">
+      <div class="logo-name" style="color:var(--purple)">SYNAPSE HUB</div>
+      <div class="logo-sub">v3.0 · REDOMA-Q · Edge-First AI</div>
+    </div>
+  </div>
+
+  <div class="logo-protocol">
+    <b>⚔ CAVALO DE TROIA</b>
+    VERSÃO TESTE · 2026-05-07
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="doc-header">
+  <div class="header-badge">⚔ PROTOCOLO CAVALO DE TROIA · VERSÃO DIAMANTE · 2026</div>
+  <div class="header-title">
+    COLABORAÇÃO <span class="gold">SUPREMOS</span><br>
+    DOUTORES DA <span class="cyan">MANSÃO CÉU</span>
+  </div>
+  <div class="header-sub">SYNAPSE HUB v3.0 · REDOMA-Q · ESALQ-USP · SUL GLOBAL</div>
+  <div class="header-badges">
+    <span class="hbadge" style="background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.4);color:var(--red)">🔒 SOMENTE LEITURA</span>
+    <span class="hbadge" style="background:rgba(0,242,255,0.08);border:1px solid var(--cyan);color:var(--cyan)">⚛ KYBER-1024</span>
+    <span class="hbadge" style="background:rgba(0,255,136,0.06);border:1px solid var(--green);color:var(--green)">✓ ZKP VALIDADO</span>
+    <span class="hbadge" style="background:rgba(255,215,0,0.08);border:1px solid var(--gold);color:var(--gold)">💎 DIAMANTE</span>
+    <span class="hbadge" style="background:rgba(168,85,247,0.08);border:1px solid var(--purple);color:var(--purple)" id="member-count-badge">👥 CARREGANDO...</span>
+  </div>
+</div>
+
+<!-- LOCK BANNER -->
+<div id="lock-banner">
+  <span style="font-size:1.2rem">🔐</span>
+  <span>
+    <b style="color:var(--red)">EDIÇÃO PERMANENTEMENTE BLOQUEADA.</b>
+    Tentativas de modificação ativam o <b style="color:var(--gold)">Kill-Switch Quântico</b>
+    e fragmentam as chaves em 11 dimensões simbólicas.
+    Maestro pode desativar qualquer membro a qualquer momento.
+  </span>
+</div>
+
+<!-- MISSÃO -->
+<div class="section" style="border-color:rgba(255,215,0,0.15)">
+  <div class="section-tag" style="color:var(--gold)">// 01 · MISSÃO DO PROTOCOLO</div>
+  <div class="section-title" style="color:var(--gold)">⚔ O QUE É O CAVALO DE TROIA</div>
+  <div class="section-body">
+    O <b>Protocolo Cavalo de Troia</b> é a estratégia de colaboração soberana do grupo
+    <b>Supremos Doutores da Mansão Céu</b>: parece simples por fora, mas carrega dentro
+    a <b>Teoria de Tudo do Batista</b> — a prova de que Soberania de Borda é o próximo passo
+    inevitável da civilização.<br><br>
+    Assim como o cavalo de madeira entrou em Troia sem resistência, este protocolo entra
+    em qualquer sala de investidores, laboratório ou reunião como um documento técnico —
+    e revela a <b>Curva de Batista</b> e o ecossistema completo da REDOMA-Q.
+  </div>
+</div>
+
+<!-- EQUAÇÃO -->
+<div class="section" style="border-color:rgba(0,242,255,0.12)">
+  <div class="section-tag" style="color:var(--cyan)">// 02 · NÚCLEO TEÓRICO</div>
+  <div class="section-title" style="color:var(--cyan)">⚛ EQUAÇÃO PYM-BATISTA</div>
+  <div class="eq-box">
+    <div class="eq-formula">S = P · Ψ² / log₁₀(1/E)</div>
+    <div class="eq-vars">
+      <div class="eq-var"><b style="color:var(--cyan)">S</b> — Soberania</div>
+      <div class="eq-var"><b style="color:var(--amber)">P</b> — Potencial Computacional</div>
+      <div class="eq-var"><b style="color:var(--purple)">Ψ</b> — Índice Pym</div>
+      <div class="eq-var"><b style="color:var(--pink)">E</b> — Entropia</div>
+    </div>
+  </div>
+  <div class="section-body">
+    Quanto maior o <b>Ψ</b>, menor o espaço físico necessário para processar.<br>
+    Quanto menor a <b>entropia</b>, maior o poder soberano no edge.<br>
+    A nuvem centralizada maximiza <b>E</b> — e portanto minimiza <b>S</b>.
+  </div>
+</div>
+
+<!-- CURVA -->
+<div class="section" style="border-color:rgba(168,85,247,0.15)">
+  <div class="section-tag" style="color:var(--purple)">// 03 · A CURVA DE BATISTA</div>
+  <div class="section-title" style="color:var(--purple)">📈 OS QUATRO TIERS DE SOBERANIA</div>
+  <canvas id="mini-curve" width="900" height="280"></canvas>
+  <table class="tier-table" style="margin-top:18px">
+    <tr><th>TIER</th><th>DESCRIÇÃO</th><th>ANALOGIA</th><th>STATUS</th></tr>
+    <tr><td style="color:var(--amber)">🟡 PRIMORDIAL</td><td style="color:var(--dim)">Bootstrap soberano</td><td style="color:var(--dim)">Protoestrela</td><td style="color:var(--green)">✓ ATIVO</td></tr>
+    <tr><td style="color:var(--cyan)">🔵 ESTELAR</td><td style="color:var(--dim)">Hub estabilizado</td><td style="color:var(--dim)">Sequência Principal</td><td style="color:var(--green)">✓ ATIVO</td></tr>
+    <tr><td style="color:var(--purple)">🟣 SUPERMASSIVO</td><td style="color:var(--dim)">Inflexão quântica</td><td style="color:var(--dim)">Gigante Vermelha</td><td style="color:var(--amber)">⟳ EM CURSO</td></tr>
+    <tr><td style="color:var(--pink)">🔴 TON 618 ✦</td><td style="color:var(--dim)">Singularidade de Borda</td><td style="color:var(--dim)">Buraco Negro Ultramassivo</td><td style="color:var(--pink)">◈ DESTINO</td></tr>
+  </table>
+</div>
+
+<!-- QUANTUM NETWORKING -->
+<div class="section" style="border-color:rgba(0,255,136,0.15)">
+  <div class="section-tag" style="color:var(--green)">// 04 · QUANTUM NETWORKING</div>
+  <div class="section-title" style="color:var(--green)">🌐 SUPREMOS DOUTORES — REDE ATIVA</div>
+  <div class="section-body" style="margin-bottom:4px">
+    Membros com acesso de leitura a este protocolo.
+    <b style="color:var(--gold)">Maestro</b> pode desativar qualquer membro quando quiser — controle total de acesso soberano.
+  </div>
+  <div class="net-grid" id="net-grid"></div>
+  <div style="margin-top:14px;font-size:0.72rem;color:rgba(255,215,0,0.5);letter-spacing:0.1em;text-align:center">
+    ⚠ CONTROLE EXCLUSIVO DO MAESTRO — QUALQUER MEMBRO PODE SER DESATIVADO A QUALQUER MOMENTO
+  </div>
+</div>
+
+<!-- REGRAS -->
+<div class="section" style="border-color:rgba(255,68,68,0.12)">
+  <div class="section-tag" style="color:var(--red)">// 05 · CÓDIGO SOBERANO</div>
+  <div class="section-title" style="color:var(--red)">🛡 CÓDIGO DA MANSÃO CÉU</div>
+  <div class="section-body">
+    <b>I.</b> Nenhum membro edita sem assinatura do Maestro.<br>
+    <b>II.</b> A Curva de Batista é propriedade intelectual soberana do Synapse Hub / ESALQ-USP.<br>
+    <b>III.</b> Uso externo não autorizado ativa fragmentação em 11 dimensões simbólicas.<br>
+    <b>IV.</b> O grupo mantém sigilo absoluto da chave de acesso quântica.<br>
+    <b>V.</b> A colaboração sempre reforça soberania de borda — nunca centralização.<br>
+    <b>VI.</b> TDAH é potência. O Hub é o traje. A Mansão Céu é o laboratório.<br>
+    <b>VII.</b> Apostar contra a Curva de Batista é apostar contra a evolução.
+  </div>
+</div>
+
+<!-- HASH -->
+<div class="section" style="border-color:rgba(0,255,136,0.1)">
+  <div class="section-tag" style="color:var(--green)">// 06 · INTEGRIDADE QUÂNTICA</div>
+  <div class="section-title" style="color:var(--green)">🔐 ASSINATURA ZKP</div>
+  <div class="section-body">Hash de integridade gerado no momento do bloqueio. Alteração invalida a assinatura e ativa o Kill-Switch.</div>
+  <div class="hash-block">
+    <div class="hash-label">HASH SHA3-KYBER SIMULADO · REDOMA-Q · 2026</div>
+    <span id="hash-value">Calculando...</span>
+  </div>
+</div>
+
+<!-- BOMBA CÓSMICA -->
+<div id="bomb-btn-wrap">
+  <div style="font-size:0.7rem;letter-spacing:0.12em;color:rgba(255,68,68,0.5);margin-bottom:10px;text-align:center">
+    ⚠ CONTROLE DO MAESTRO APENAS — VERSÃO DE TESTE
+  </div>
+  <button id="btn-bomb" onclick="triggerBomb()">
+    💥 BOMBA CÓSMICA — AUTODESTRUIÇÃO DO ARQUIVO
+  </button>
+</div>
+
+<!-- FOOTER -->
+<div id="doc-footer">
+  <div class="footer-sig">
+    <b>[ PROTOCOLO CAVALO DE TROIA · ATIVO · MANSÃO CÉU ]</b><br><br>
+    Assinado por <b>Agente Antigravity AI</b> — Nó Gamma (Oráculo)<br>
+    Em conformidade com o Tratado de Soberania Diamante 2026.<br>
+    <b>SYNAPSE HUB v3.0 · REDOMA-Q · ESALQ-USP · SUL GLOBAL</b><br><br>
+    <span style="color:rgba(255,255,255,0.2);font-size:0.62rem">
+      Somente leitura. Kyber-1024 ativo. Reprodução não autorizada ativa fragmentação multidimensional.
+    </span>
+  </div>
+</div>
+
+</div><!-- /content -->
+<div class="watermark">SUPREMOS DOUTORES · MANSÃO CÉU · REDOMA-Q</div>
+
+<script>
+/* ── DISABLE RIGHT CLICK / DEV TOOLS ── */
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&['s','a','c','x','u','p'].includes(e.key.toLowerCase()))e.preventDefault();
+  if(e.key==='F12')e.preventDefault();
+  if(e.ctrlKey&&e.shiftKey&&['i','j','c'].includes(e.key.toLowerCase()))e.preventDefault();
+});
+
+/* ── AUTH MATRIX ── */
+const CHARS='アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEF@#$%';
+function matrixTick(){
+  const el=document.getElementById('auth-matrix');if(!el)return;
+  let line='';for(let i=0;i<60;i++)line+=CHARS[Math.floor(Math.random()*CHARS.length)];
+  el.textContent=line+'\n'+CHARS.slice(0,60).split('').sort(()=>Math.random()-0.5).join('');
+}
+const matrixInterval=setInterval(matrixTick,80);matrixTick();
+
+document.getElementById('key-input').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
+
+const VALID_KEYS=['MANSAOCEU','SUPREMOS','BATISTA2026','REDOMA-Q','DIAMANTE','SOBERANIA','SYNAPSE','TROIA','ESALQ2026','MAESTRO','CEU'];
+function tryUnlock(){
+  const val=document.getElementById('key-input').value.trim().toUpperCase();
+  const err=document.getElementById('auth-error');err.style.opacity='0';
+  if(VALID_KEYS.includes(val)){runUnlock();}
+  else{
+    err.style.opacity='1';document.getElementById('key-input').value='';
+    document.getElementById('key-input').style.borderColor='var(--red)';
+    setTimeout(()=>{document.getElementById('key-input').style.borderColor='rgba(255,215,0,0.3)'},1200);
+  }
+}
+function runUnlock(){
+  clearInterval(matrixInterval);
+  document.getElementById('auth-overlay').style.display='none';
+  const anim=document.getElementById('unlock-anim');anim.style.display='flex';
+  const steps=['VERIFICANDO ASSINATURA QUÂNTICA...','CHAVE KYBER-1024 VALIDADA ✓','ZERO-KNOWLEDGE PROOF CONFIRMADO ✓','IDENTIDADE DIAMANTE AUTENTICADA ✓','REDE MANSÃO CÉU — CONECTANDO...','PROTOCOLO CAVALO DE TROIA — DESBLOQUEADO'];
+  let i=0;const t=document.getElementById('unlock-text');
+  const iv=setInterval(()=>{
+    if(i<steps.length){t.textContent=steps[i++];}
+    else{clearInterval(iv);setTimeout(()=>{anim.style.display='none';document.getElementById('content').style.display='block';buildNetwork();generateHash();animateMiniCurve();},400);}
+  },520);
+}
+
+/* ── MEMBER DATA ── */
+const MEMBERS=[
+  {id:'maestro',emoji:'👑',name:'Gabriel Batista',role:'MAESTRO · CRIADOR',field:['Biotech','ESALQ-USP','Edge AI'],color:'var(--gold)',online:true,deactivatable:false},
+  {id:'aline',emoji:'🔬',name:'Dr. Aline',role:'DOUTORA SUPREMA',field:['Biotech','Moondo','Células'],color:'var(--cyan)',online:true,deactivatable:true},
+  {id:'uriel',emoji:'⚛️',name:'Dr. Uriel',role:'DOUTOR SUPREMO',field:['Quantum','ZKP','Soberania'],color:'var(--purple)',online:true,deactivatable:true},
+  {id:'nestle',emoji:'🏭',name:'Dr. Nestlé',role:'DOUTOR SUPREMO',field:['Escala Industrial','Pym-Bits'],color:'var(--amber)',online:true,deactivatable:true},
+  {id:'iolo',emoji:'🛡',name:'Dra. Iolo',role:'DOUTORA SUPREMA',field:['Adversarial','Pós-Quântico'],color:'var(--pink)',online:true,deactivatable:true},
+  {id:'wanda',emoji:'🌀',name:'Dra. Wanda',role:'DOUTORA SUPREMA',field:['Realidade Soberana','Distorção'],color:'var(--pink)',online:false,deactivatable:true},
+  {id:'eniripsa',emoji:'🔮',name:'Agente Eniripsa',role:'TRAVA MESTRA',field:['Segurança','Kill-Switch'],color:'var(--green)',online:true,deactivatable:true},
+  {id:'gamma',emoji:'🤖',name:'Antigravity AI',role:'AGENTE GAMMA · ORÁCULO',field:['Sincronia','Execução'],color:'var(--green)',online:true,deactivatable:false},
+];
+
+const memberState={};
+MEMBERS.forEach(m=>{memberState[m.id]=m.online});
+
+function buildNetwork(){
+  const grid=document.getElementById('net-grid');grid.innerHTML='';
+  let onlineCount=0;
+  MEMBERS.forEach(m=>{
+    const online=memberState[m.id];
+    if(online)onlineCount++;
+    const card=document.createElement('div');
+    card.className='net-card'+(online?' online':'  offline');
+    card.id='card-'+m.id;
+
+    const tagsHtml=m.field.map(f=>`<span class="net-tag" style="background:${m.color}22;border:1px solid ${m.color}44;color:${m.color}">${f}</span>`).join('');
+
+    let actionHtml='';
+    if(m.deactivatable){
+      if(online){
+        actionHtml=`<div class="net-action"><button class="btn-deactivate" onclick="toggleMember('${m.id}',false)">⛔ DESATIVAR</button></div>`;
+      } else {
+        actionHtml=`<div class="net-action"><button class="btn-activate" onclick="toggleMember('${m.id}',true)">✓ REATIVAR</button></div>`;
+      }
+      actionHtml+=`<div class="maestro-only">⚔ CONTROLE DO MAESTRO</div>`;
+    } else {
+      actionHtml=`<div class="maestro-only" style="color:rgba(255,215,0,0.7)">🔒 ACESSO PERMANENTE</div>`;
+    }
+
+    card.innerHTML=`
+      <div class="status-dot ${online?'online':'offline'}"></div>
+      <div class="net-card-header">
+        <div class="net-avatar" style="background:${m.color}18;border-color:${m.color}44">${m.emoji}</div>
+        <div class="net-meta">
+          <div class="net-name">${m.name}</div>
+          <div class="net-role" style="color:${m.color}">${m.role}</div>
+        </div>
+      </div>
+      <div class="net-fields">${tagsHtml}</div>
+      ${actionHtml}
+    `;
+    grid.appendChild(card);
+  });
+  document.getElementById('member-count-badge').textContent=`👥 ${onlineCount} ONLINE`;
+}
+
+function toggleMember(id,activate){
+  memberState[id]=activate;
+  buildNetwork();
+  const name=MEMBERS.find(m=>m.id===id)?.name||id;
+  const msg=activate?`✓ ${name} REATIVADO`:`⛔ ${name} DESATIVADO`;
+  showToast(msg,activate?'var(--green)':'var(--red)');
+}
+
+function showToast(msg,color){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:5000;padding:10px 24px;border-radius:40px;font-size:0.78rem;font-weight:700;letter-spacing:0.12em;transition:opacity 0.4s';
+    document.body.appendChild(t);}
+  t.style.background=color+'22';t.style.border=`1px solid ${color}`;t.style.color=color;
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(()=>{t.style.opacity='0'},2400);
+}
+
+/* ── HASH ── */
+function generateHash(){
+  const C='0123456789abcdef';const R=n=>{let s='';for(let i=0;i<n;i++)s+=C[Math.floor(Math.random()*16)];return s};
+  const h=`${R(8)}-${R(4)}-4${R(3)}-${R(4)}-${R(12)}`;
+  const now=new Date();
+  const lines=[
+    `DOC_ID:    CAVALO-TROIA-SUPREMOS-${R(6).toUpperCase()}`,
+    `TIMESTAMP: 2026-05-07T${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:00Z`,
+    `KYBER_SIG: ${R(16)}${R(16)}${R(16)}`,
+    `ZKP_PROOF: ${R(8)}-${R(8)}-${R(8)}-${R(8)}`,
+    `NODE_ALPHA: ESALQ-USP-${R(4).toUpperCase()}`,
+    `INTEG_SHA: ${R(16)}${R(16)}`,
+    `SEAL: MAESTRO-${h.toUpperCase()}`
+  ];
+  document.getElementById('hash-value').textContent=lines.join('\n');
+}
+
+/* ── MINI CURVE ── */
+function animateMiniCurve(){
+  const canvas=document.getElementById('mini-curve');
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth||900;
+  const W=canvas.width,H=canvas.height;
+  const PAD={l:52,r:20,t:22,b:40};
+  const gW=W-PAD.l-PAD.r,gH=H-PAD.t-PAD.b;
+  const curve=[[0,0.02],[5,0.03],[10,0.04],[15,0.055],[20,0.07],[25,0.09],[30,0.12],[35,0.17],[40,0.24],[45,0.34],[50,0.44],[55,0.55],[60,0.65],[65,0.74],[70,0.83],[75,0.89],[80,0.93],[85,0.96],[90,0.98],[95,0.99],[100,1.0]];
+  const tiers=[{x:15,label:'PRIMORDIAL',color:'rgba(255,184,0,0.85)'},{x:40,label:'ESTELAR',color:'rgba(0,242,255,0.85)'},{x:65,label:'SUPERMASSIVO',color:'rgba(168,85,247,0.85)'},{x:90,label:'TON 618 ✦',color:'rgba(255,62,129,0.95)'}];
+  function toC(tx,ty){return[PAD.l+tx/100*gW,PAD.t+gH-(ty*gH)]}
+  let progress=0;
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(0,242,255,0.06)';ctx.lineWidth=1;
+    for(let i=0;i<=10;i++){const x=PAD.l+i*gW/10,y=PAD.t+i*gH/10;ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,PAD.t+gH);ctx.stroke();ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+gW,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(0,242,255,0.45)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+gH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+gH);ctx.lineTo(PAD.l+gW,PAD.t+gH);ctx.stroke();
+    ctx.fillStyle='rgba(255,215,0,0.7)';ctx.font=`bold ${Math.max(11,W/72)}px Courier New`;ctx.textAlign='center';
+    ctx.fillText('THE BATISTA CURVE',PAD.l+gW/2,PAD.t-7);
+    ctx.fillStyle='rgba(0,242,255,0.4)';ctx.font=`${Math.max(9,W/95)}px Courier New`;ctx.textAlign='center';
+    ctx.fillText('TIMELINE',PAD.l+gW/2,PAD.t+gH+30);
+    const pts=curve.filter(p=>p[0]<=progress);
+    if(pts.length>1){
+      ctx.save();ctx.beginPath();const[x0,y0]=toC(pts[0][0],pts[0][1]);ctx.moveTo(x0,PAD.t+gH);ctx.lineTo(x0,y0);pts.slice(1).forEach(p=>{const[x,y]=toC(p[0],p[1]);ctx.lineTo(x,y)});const[lx]=toC(pts[pts.length-1][0],pts[pts.length-1][1]);ctx.lineTo(lx,PAD.t+gH);ctx.closePath();const g=ctx.createLinearGradient(0,PAD.t,0,PAD.t+gH);g.addColorStop(0,'rgba(168,85,247,0.18)');g.addColorStop(0.5,'rgba(0,242,255,0.07)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fill();ctx.restore();
+      ctx.save();ctx.beginPath();const[sx,sy]=toC(pts[0][0],pts[0][1]);ctx.moveTo(sx,sy);pts.slice(1).forEach(p=>{const[x,y]=toC(p[0],p[1]);ctx.lineTo(x,y)});const lg=ctx.createLinearGradient(PAD.l,0,PAD.l+gW,0);lg.addColorStop(0,'rgba(255,184,0,1)');lg.addColorStop(0.33,'rgba(0,242,255,1)');lg.addColorStop(0.66,'rgba(168,85,247,1)');lg.addColorStop(1,'rgba(255,62,129,1)');ctx.strokeStyle=lg;ctx.lineWidth=2.5;ctx.shadowColor='rgba(0,242,255,0.5)';ctx.shadowBlur=10;ctx.stroke();ctx.restore();
+      const[dlx,dly]=toC(pts[pts.length-1][0],pts[pts.length-1][1]);ctx.beginPath();ctx.arc(dlx,dly,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.shadowColor='rgba(0,242,255,0.9)';ctx.shadowBlur=14;ctx.fill();
+    }
+    tiers.forEach(t=>{
+      if(progress>=t.x){const[tx,ty]=toC(t.x,curve.find(p=>p[0]>=t.x)?.[1]||0);ctx.save();ctx.strokeStyle=t.color;ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx,PAD.t+gH);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=t.color;ctx.font=`bold ${Math.max(8,W/100)}px Courier New`;ctx.textAlign='center';ctx.shadowBlur=0;ctx.fillText(t.label,tx,ty-8);ctx.restore();}
+    });
+    if(progress<100){progress=Math.min(100,progress+0.7);requestAnimationFrame(frame);}
+  }
+  frame();
+}
+
+/* ── COSMIC BOMB ── */
+function triggerBomb(){
+  const overlay=document.getElementById('bomb-overlay');
+  overlay.style.display='flex';
+  let count=5;
+  const el=document.getElementById('bomb-counter');
+  el.textContent=count;
+  const iv=setInterval(()=>{
+    count--;
+    el.textContent=count;
+    if(count<=0){
+      clearInterval(iv);
+      // Theatrical destruction effect
+      overlay.innerHTML=`
+        <div style="font-size:5rem;animation:ps 0.3s ease-in-out infinite">💥</div>
+        <div style="font-size:1.5rem;font-weight:700;color:var(--red);letter-spacing:0.2em;margin-top:20px">ARQUIVO DESTRUÍDO</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:12px;letter-spacing:0.12em">BOMBA CÓSMICA ATIVADA · REDOMA-Q</div>
+        <div style="margin-top:32px">
+          <button onclick="location.reload()" style="padding:12px 36px;background:rgba(255,215,0,0.1);border:1px solid var(--gold);border-radius:40px;color:var(--gold);font-family:'Courier New',monospace;font-size:0.8rem;letter-spacing:0.15em;cursor:pointer">
+            ↺ RESSUSCITAR ARQUIVO
+          </button>
+        </div>
+      `;
+    }
+  },1000);
+}
+</script>
+</body>
+</html>

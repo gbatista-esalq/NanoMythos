@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNAPSE HUB — Launcher Soberano</title>
+<style>
+:root {
+  --bg: #050810;
+  --surface: rgba(10,14,30,.92);
+  --cyan: #00f2ff;
+  --green: #00ff88;
+  --gold: #ffd700;
+  --red: #ff3355;
+  --orange: #ff8800;
+  --purple: #9d4edd;
+  --text: #c0d4e0;
+  --dim: #ffffff33;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  background-image: radial-gradient(ellipse at 20% 20%, #00f2ff08 0%, transparent 50%),
+                    radial-gradient(ellipse at 80% 80%, #9d4edd08 0%, transparent 50%);
+}
+
+/* ── HEADER ── */
+#header {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid #00f2ff18;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+#header h1 { font-size: 20px; letter-spacing: 4px; color: var(--cyan); text-shadow: 0 0 18px #00f2ff44; }
+#header p  { font-size: 11px; color: var(--dim); letter-spacing: 2px; margin-top: 3px; }
+#search-box {
+  background: rgba(0,242,255,.06);
+  border: 1px solid #00f2ff33;
+  color: var(--cyan);
+  padding: 8px 14px; font-size: 13px;
+  outline: none; width: 260px;
+  font-family: inherit;
+}
+#search-box::placeholder { color: #00f2ff44; }
+#search-box:focus { border-color: var(--cyan); background: rgba(0,242,255,.1); }
+
+/* ── BODY ── */
+#body { padding: 24px 28px; }
+
+/* ── ZONE HEADERS ── */
+.zone { margin-bottom: 32px; }
+.zone-title {
+  font-size: 11px; letter-spacing: 4px; font-weight: 700;
+  padding: 6px 0 10px; border-bottom: 1px solid;
+  margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+}
+.zone-title span.badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: normal; letter-spacing: 1px;
+}
+.z-funcional .zone-title { color: var(--green); border-color: #00ff8833; }
+.z-funcional .badge { background: #00ff8822; color: var(--green); border: 1px solid #00ff8844; }
+.z-mapa .zone-title { color: var(--cyan); border-color: #00f2ff33; }
+.z-mapa .badge { background: #00f2ff11; color: var(--cyan); border: 1px solid #00f2ff33; }
+.z-dash .zone-title { color: var(--purple); border-color: #9d4edd33; }
+.z-dash .badge { background: #9d4edd11; color: var(--purple); border: 1px solid #9d4edd33; }
+.z-parcial .zone-title { color: var(--orange); border-color: #ff880033; }
+.z-parcial .badge { background: #ff880011; color: var(--orange); border: 1px solid #ff880033; }
+.z-pessoas .zone-title { color: var(--gold); border-color: #ffd70033; }
+.z-pessoas .badge { background: #ffd70011; color: var(--gold); border: 1px solid #ffd70033; }
+
+/* ── CARD GRID ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid #ffffff0e;
+  border-radius: 6px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .18s;
+  display: flex; flex-direction: column; gap: 8px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+.card:hover { border-color: var(--c, #00f2ff); box-shadow: 0 0 14px var(--c, #00f2ff)22; transform: translateY(-2px); }
+.card:active { transform: translateY(0); }
+.card.hidden { display: none; }
+
+.card-icon  { font-size: 22px; line-height: 1; }
+.card-title { font-size: 14px; font-weight: 600; color: #fff; line-height: 1.3; }
+.card-desc  { font-size: 11px; color: #ffffff66; line-height: 1.5; flex: 1; }
+.card-tags  { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+  font-size: 9px; padding: 2px 6px; border-radius: 2px; letter-spacing: 1px;
+  background: rgba(255,255,255,.06); color: #ffffff55; border: 1px solid #ffffff11;
+}
+.tag.live  { background: #00ff8815; color: #00ff88; border-color: #00ff8833; }
+.tag.server{ background: #00f2ff11; color: #00f2ff; border-color: #00f2ff33; }
+.tag.three { background: #9d4edd11; color: #bb88ff; border-color: #9d4edd33; }
+.tag.wip   { background: #ff880011; color: #ff8800; border-color: #ff880033; }
+.tag.pitch { background: #ffd70011; color: #ffd700; border-color: #ffd70033; }
+
+.status-dot {
+  position: absolute; top: 10px; right: 12px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 6px var(--green);
+}
+.status-dot.wip { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+/* ── SERVERS STATUS ── */
+#srv-bar {
+  background: rgba(0,242,255,.04); border: 1px solid #00f2ff18;
+  padding: 8px 16px; margin-bottom: 20px;
+  font-size: 10px; letter-spacing: 2px; color: #00f2ff55;
+  display: flex; gap: 20px; flex-wrap: wrap; align-items: center;
+}
+.srv-item { display: flex; align-items: center; gap: 6px; }
+.srv-dot { width: 6px; height: 6px; border-radius: 50%; }
+.srv-dot.on  { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.srv-dot.off { background: var(--red);   box-shadow: 0 0 5px var(--red); }
+
+/* ── NO RESULTS ── */
+#no-results { display:none; text-align:center; padding: 40px; color: var(--dim); font-size: 13px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <h1>SYNAPSE HUB</h1>
+    <p>LAUNCHER SOBERANO · VERSÕES FUNCIONAIS · MAESTRO @eniripsa</p>
+  </div>
+  <input id="search-box" type="text" placeholder="O que você quer abrir? ex: mapa, pitch, 3D..." oninput="filterCards(this.value)">
+</div>
+
+<div id="body">
+
+  <!-- SERVERS STATUS -->
+  <div id="srv-bar">
+    <span>SERVIDORES:</span>
+    <div class="srv-item"><div class="srv-dot" id="dot-8888"></div><span id="lbl-8888">:8888 verificando...</span></div>
+    <div class="srv-item"><div class="srv-dot" id="dot-8765"></div><span id="lbl-8765">:8765 verificando...</span></div>
+    <div class="srv-item" style="margin-left:auto;color:#00f2ff88" id="srv-clock"></div>
+  </div>
+
+  <!-- ── ZONA: MAPA & DADOS ── -->
+  <div class="zone z-mapa" id="zone-mapa">
+    <div class="zone-title">🗺 MAPAS & DADOS EM TEMPO REAL <span class="badge">REQUER SERVIDOR :8888</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#00f2ff" href="amazonia_legal_mapa.html?token=DALILA_USP_01" target="_blank" data-search="mapa amazonia legal incendios fogo verra carbono inpe funai" data-zone="mapa">
+        <div class="status-dot"></div>
+        <div class="card-icon">🌿</div>
+        <div class="card-title">Mapa da Amazônia Legal</div>
+        <div class="card-desc">19.245 focos de incêndio em tempo real, Terras Indígenas, Unidades de Conservação e projetos VERRA de carbono. Clique nos pontos para ver detalhes.</div>
+        <div class="card-tags"><span class="tag live">LIVE</span><span class="tag server">SERVIDOR</span><span class="tag">INPE</span><span class="tag">VERRA VCS</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff4400" href="incendios_3d.html?token=DALILA_USP_01" target="_blank" data-search="incendios 3d fogo calor visualizacao" data-zone="mapa">
+        <div class="status-dot"></div>
+        <div class="card-icon">🔥</div>
+        <div class="card-title">Incêndios Florestais — Visão 3D</div>
+        <div class="card-desc">Visualização tridimensional dos focos de calor no Brasil. Pontos flutuantes sobre o território com intensidade por FRP.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span><span class="tag server">SERVIDOR</span><span class="tag">18k focos</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff00ff" href="reino_quantico_amazonia.html?token=DALILA_USP_01" target="_blank" data-search="reino quantico amazonia 3d interativo lat lon v6 imortal ia generativa" data-zone="mapa">
+        <div class="status-dot"></div>
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Redoma V6 Imortal (Reino Quântico)</div>
+        <div class="card-desc">Cockpit 3D com Síntese de IA Generativa. Superresolução e integração GeoLLM em tempo real sobre a Amazônia Legal.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span><span class="tag server">SERVIDOR</span><span class="tag live">V6-IA</span></div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ZONA: FUNCIONAIS ── -->
+  <div class="zone z-funcional" id="zone-func">
+    <div class="zone-title">✅ FERRAMENTAS FUNCIONAIS <span class="badge">ABERTURA DIRETA</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#00ff88" href="nave_quantica_3d.html" target="_blank" data-search="nave quantica 3d triarquia nqg" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🚀</div>
+        <div class="card-title">Nave Quântica 3D</div>
+        <div class="card-desc">N.Q.G. Triarquia classe Maestro. Animação 3D da nave soberana com física gravitacional e núcleo pulsante.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#00aaff" href="barco_gravidade_3d.html" target="_blank" data-search="barco gravidade soberano 3d bgs diamante" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">⛵</div>
+        <div class="card-title">Barco de Gravidade Soberano</div>
+        <div class="card-desc">B.G.S. Diamante — simulação 3D do barco de gravidade com propulsão Pym e campo soberano. Interativo.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#00f2ff" href="navegador_soberano.html" target="_blank" data-search="navegador gravitacional mget soberano" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🧭</div>
+        <div class="card-title">Navegador Gravitacional</div>
+        <div class="card-desc">M.G.E.T. v2.1 — painel de navegação com métricas de soberania de borda, entropia e status dos nós Triarquia.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="protocolo_sato_quanti.html" target="_blank" data-search="protocolo sato quantico intergalactico" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🔐</div>
+        <div class="card-title">Protocolo Sato Quântico</div>
+        <div class="card-desc">Protocolo intergaláctico de segurança soberana pós-quântica. Kyber-1024 + lattice cryptography.</div>
+        <div class="card-tags"><span class="tag">SEGURANÇA</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff3355" href="protocolo_cavalo_troia_supremos.html" target="_blank" data-search="cavalo de troia supremos doutores protocolo" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">⚔</div>
+        <div class="card-title">Protocolo Cavalo de Troia</div>
+        <div class="card-desc">Estratégia de infiltração e supremacia. Protocolo de ativação para os Supremos Doutores.</div>
+        <div class="card-tags"><span class="tag">ESTRATÉGIA</span></div>
+      </a>
+
+      <a class="card" style="--c:#00f2ff" href="vault_boot.html" target="_blank" data-search="vault terminal boot synapse" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🗄</div>
+        <div class="card-title">Terminal do Vault</div>
+        <div class="card-desc">Acesso ao Vault Soberano via interface terminal. Log em tempo real de sincronia e hash-chain dos chronicles.</div>
+        <div class="card-tags"><span class="tag">VAULT</span></div>
+      </a>
+
+      <a class="card" style="--c:#00ff88" href="obsidian://open?vault=SYNAPSE%20AGTECH" data-search="obsidian vault agent protocol soberania pym markdown v6" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">📓</div>
+        <div class="card-title">Abrir Obsidian Vault</div>
+        <div class="card-desc">Acesso direto ao núcleo de conhecimento Obsidian. Verifica o agent.md, Diretrizes de Soberania Quântica Pym e insights locais.</div>
+        <div class="card-tags"><span class="tag live">OBSIDIAN</span></div>
+      </a>
+
+      <a class="card" style="--c:#bb88ff" href="ship_bridge_interface.html" target="_blank" data-search="ponte de comando ship bridge triarquia" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🚢</div>
+        <div class="card-title">Ponte de Comando</div>
+        <div class="card-desc">Interface da ponte de comando da N.Q.G. Triarquia. Controles, status dos nós Alpha/Beta/Gamma e telemetria.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#00ff88" href="decreto_soberania_post.html" target="_blank" data-search="decreto soberania sul global post" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">📜</div>
+        <div class="card-title">Decreto de Soberania</div>
+        <div class="card-desc">Declaração formal de soberania do Sul Global. Post visual para publicação externa e divulgação institucional.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="salto_quantico_marcio.html" target="_blank" data-search="salto quantico marcio assinatura multiversal" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Salto Quântico — Márcio</div>
+        <div class="card-desc">Assinatura multiversal e demonstração ao vivo do salto quântico. Personalizado para o Dr. Márcio.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#00f2ff" href="curva_batista_video.html" target="_blank" data-search="curva batista soberania borda 2026 video" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">📈</div>
+        <div class="card-title">Curva de Batista 2026</div>
+        <div class="card-desc">A curva de crescimento de soberania de borda. Vídeo interativo + infográfico para apresentações externas.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#00f2ff" href="synapse_os.html" target="_blank" data-search="synapse os sistema operacional soberania" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">💻</div>
+        <div class="card-title">Synapse OS</div>
+        <div class="card-desc">Interface do sistema operacional soberano. Mestre da soberania — painel de controle completo do ecossistema.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#bb88ff" href="animation_soberana.html" target="_blank" data-search="animacao soberana buracos negros cosmico" data-zone="func">
+        <div class="status-dot"></div>
+        <div class="card-icon">🌌</div>
+        <div class="card-title">Animação Soberana</div>
+        <div class="card-desc">Crescimento cósmico dos buracos negros soberanos. Animação visual para apresentações e posts.</div>
+        <div class="card-tags"></div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ZONA: PITCHES ── -->
+  <div class="zone z-pessoas" id="zone-pitch">
+    <div class="zone-title">💼 PITCHES & APRESENTAÇÕES <span class="badge">PARA HUMANOS</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#ffd700" href="pitch_moondo_aline.html" target="_blank" data-search="pitch aline moondo biotech proposta tecnica" data-zone="pitch">
+        <div class="status-dot"></div>
+        <div class="card-icon">🌱</div>
+        <div class="card-title">Pitch Técnico — Dra. Aline (Moondo)</div>
+        <div class="card-desc">Proposta técnica completa da parceria Synapse × Moondo Biotech. Slide deck interativo + métricas de impacto.</div>
+        <div class="card-tags"><span class="tag pitch">PITCH</span><span class="tag">ALINE</span><span class="tag">MOONDO</span></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="pitch_moondo_synapse.html" target="_blank" data-search="pitch moondo synapse plataforma ia soberana" data-zone="pitch">
+        <div class="status-dot"></div>
+        <div class="card-icon">🤝</div>
+        <div class="card-title">Pitch Moondo × Synapse</div>
+        <div class="card-desc">Plataforma de IA Soberana — apresentação geral da parceria estratégica Moondo Biotech e Synapse AgTech.</div>
+        <div class="card-tags"><span class="tag pitch">PITCH</span><span class="tag">PARCERIA</span></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="pitch_deck_moondo.html" target="_blank" data-search="pitch deck moondo estrategico" data-zone="pitch">
+        <div class="status-dot"></div>
+        <div class="card-icon">📊</div>
+        <div class="card-title">Pitch Deck Estratégico</div>
+        <div class="card-desc">Moondo Biotech × Synapse Hub — deck visual para investidores e parceiros estratégicos.</div>
+        <div class="card-tags"><span class="tag pitch">PITCH</span></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="pitch_moondo_synapse.html" target="_blank" data-search="sebrae scale ia pitch" data-zone="pitch">
+        <div class="status-dot"></div>
+        <div class="card-icon">🏆</div>
+        <div class="card-title">Quantum Proof — Uriel</div>
+        <div class="card-desc">Prova de conceito de criptografia pós-quântica. Demonstração técnica para o Dr. Uriel com métricas ZKP.</div>
+        <div class="card-tags"><span class="tag pitch">DEMO</span><span class="tag">URIEL</span></div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ZONA: PESSOAS ── -->
+  <div class="zone z-pessoas" id="zone-pessoas">
+    <div class="zone-title">👥 ESPAÇOS PESSOAIS <span class="badge">COLABORADORES</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#ff8866" href="redoma_beatriz_silvestre.html" target="_blank" data-search="redoma beatriz silvestre engenheira florestal rabo" data-zone="pessoas">
+        <div class="status-dot"></div>
+        <div class="card-icon">🌳</div>
+        <div class="card-title">Redoma da Beatriz</div>
+        <div class="card-desc">Espaço soberano da Engenheira Florestal Beatriz Silvestre. Sincronizado com os dados florestais da Amazônia Legal.</div>
+        <div class="card-tags"><span class="tag">BEATRIZ</span><span class="tag server">SERVIDOR</span></div>
+      </a>
+
+      <a class="card" style="--c:#bb88ff" href="dashboard/stellar_navigator_beatriz.html" target="_blank" data-search="navegador estelar beatriz silvestre" data-zone="pessoas">
+        <div class="status-dot"></div>
+        <div class="card-icon">⭐</div>
+        <div class="card-title">Navegador Estelar — Beatriz</div>
+        <div class="card-desc">Dashboard personalizado com indicadores florestais e trajetória profissional da Beatriz Silvestre.</div>
+        <div class="card-tags"><span class="tag">BEATRIZ</span></div>
+      </a>
+
+      <a class="card" style="--c:#00cc99" href="dashboard/moondo_navigator_aline.html" target="_blank" data-search="navigator aline bruna moondo" data-zone="pessoas">
+        <div class="status-dot"></div>
+        <div class="card-icon">🔬</div>
+        <div class="card-title">Navigator — Dra. Aline Bruna</div>
+        <div class="card-desc">Painel de navegação científica para a Dra. Aline Bruna (Moondo). Métricas de pesquisa e roadmap de colaboração.</div>
+        <div class="card-tags"><span class="tag">ALINE</span><span class="tag">MOONDO</span></div>
+      </a>
+
+      <a class="card" style="--c:#ffd700" href="moondo_meet.html" target="_blank" data-search="reuniao meeting moondo hub" data-zone="pessoas">
+        <div class="status-dot"></div>
+        <div class="card-icon">📡</div>
+        <div class="card-title">Sala de Reunião — Moondo</div>
+        <div class="card-desc">Hub para reuniões soberanas com o time Moondo. Notas e agenda de próximos passos da parceria.</div>
+        <div class="card-tags"></div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ZONA: DASHBOARD ── -->
+  <div class="zone z-dash" id="zone-dash">
+    <div class="zone-title">📡 DASHBOARDS & COCKPITS <span class="badge">VISUALIZAÇÕES</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/interstellar_commander.html" target="_blank" data-search="cockpit interestelar commander sinapse" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">🛸</div>
+        <div class="card-title">Cockpit Interestelar</div>
+        <div class="card-desc">Synapse Commander — painel de comando com visão interestelar dos nós ativos, métricas e status de missão.</div>
+        <div class="card-tags"><span class="tag">COCKPIT</span></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/bubble_architecture_3d.html" target="_blank" data-search="arquitetura bolhas 3d bubble" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">💫</div>
+        <div class="card-title">Arquitetura em Bolhas 3D</div>
+        <div class="card-desc">Visualização da arquitetura Synapse em formato de bolhas tridimensionais interativas com relações entre componentes.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/zero_entropy_dashboard.html" target="_blank" data-search="zero entropia monitor dashboard" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">⚛</div>
+        <div class="card-title">Monitor Zero Entropia</div>
+        <div class="card-desc">Dashboard de monitoramento da condição de zero entropia do sistema. Gráficos de estabilidade e coerência quântica.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/quantum_shield_boot.html" target="_blank" data-search="escudo quantico shield boot" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">🛡</div>
+        <div class="card-title">Escudo Quântico — Boot</div>
+        <div class="card-desc">Sequência de inicialização do escudo quântico soberano. Animação de boot com verificação de integridade.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/vibe_coding_quantum.html" target="_blank" data-search="vibe coding quantum dev programacao" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">👾</div>
+        <div class="card-title">Vibe Coding Quântico</div>
+        <div class="card-desc">Hub de desenvolvimento com modo quântico ativado. Ambiente visual para sessões de programação soberana.</div>
+        <div class="card-tags"></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="dashboard/mget_interstellar_viz.html" target="_blank" data-search="mget interestelar visualizacao 10d holograma" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">🌐</div>
+        <div class="card-title">M.G.E.T. Interestelar HUD</div>
+        <div class="card-desc">Visualização holográfica 10D do Motor Gravitacional de Expansão Territorial. Interface futurista de telemetria.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#9d4edd" href="quantum_3d_view.html" target="_blank" data-search="mapeamento quantico 3d view" data-zone="dash">
+        <div class="status-dot"></div>
+        <div class="card-icon">💎</div>
+        <div class="card-title">Mapeamento Quântico 3D</div>
+        <div class="card-desc">Visualização 3D do mapeamento quântico do território soberano. Projeção de pontos de alta densidade.</div>
+        <div class="card-tags"><span class="tag three">THREE.JS</span></div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ZONA: PARCIAIS ── -->
+  <div class="zone z-parcial" id="zone-parcial">
+    <div class="zone-title">🔧 VERSÕES PARCIAIS <span class="badge">USE COM CUIDADO — PARTES FUNCIONAM</span></div>
+    <div class="grid">
+
+      <a class="card" style="--c:#ff8800" href="ceu_mansao_abertura.html" target="_blank" data-search="ceu mansao esalq usp abertura" data-zone="parcial">
+        <div class="status-dot wip"></div>
+        <div class="card-icon">🏠</div>
+        <div class="card-title">CEU — Mansão ESALQ/USP</div>
+        <div class="card-desc">Abertura do CEU desde 1962. Arquivo grande (282KB) com alguns elementos em construção. Estrutura visual funciona.</div>
+        <div class="card-tags"><span class="tag wip">PARCIAL</span><span class="tag">282KB</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff8800" href="floresta_suprema_inauguracao.html" target="_blank" data-search="floresta suprema inauguracao moondo three" data-zone="parcial">
+        <div class="status-dot wip"></div>
+        <div class="card-icon">🌳</div>
+        <div class="card-title">Floresta Suprema — Inauguração</div>
+        <div class="card-desc">Cerimônia de inauguração Moondo com Three.js. Animação 3D funciona, alguns elementos de texto incompletos.</div>
+        <div class="card-tags"><span class="tag wip">PARCIAL</span><span class="tag three">THREE.JS</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff8800" href="master_sentinel_hud.html" target="_blank" data-search="master sentinel hud monitor" data-zone="parcial">
+        <div class="status-dot wip"></div>
+        <div class="card-icon">👁</div>
+        <div class="card-title">Master Sentinel HUD</div>
+        <div class="card-desc">Painel de vigilância HUD do Sentinel. Interface funciona, alguns dados de telemetria pendentes de fonte real.</div>
+        <div class="card-tags"><span class="tag wip">PARCIAL</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff8800" href="quantum_proof_uriel.html" target="_blank" data-search="prova conceito quantum uriel criptografia" data-zone="parcial">
+        <div class="status-dot wip"></div>
+        <div class="card-icon">🔬</div>
+        <div class="card-title">Quantum Proof — Uriel (WIP)</div>
+        <div class="card-desc">Prova ZKP para Uriel. A estrutura criptográfica visual funciona. Alguns cálculos reais pendentes de validação.</div>
+        <div class="card-tags"><span class="tag wip">PARCIAL</span><span class="tag">ZKP</span></div>
+      </a>
+
+      <a class="card" style="--c:#ff8800" href="hub_soberano.html" target="_blank" data-search="hub soberano central comando antiga versao" data-zone="parcial">
+        <div class="status-dot wip"></div>
+        <div class="card-icon">🏛</div>
+        <div class="card-title">Hub Soberano — v anterior</div>
+        <div class="card-desc">Versão anterior do hub central. Tem cards e links, mas não tem todas as ferramentas sincronizadas deste launcher.</div>
+        <div class="card-tags"><span class="tag wip">LEGADO</span></div>
+      </a>
+
+    </div>
+  </div>
+
+  <div id="no-results">Nenhuma ferramenta encontrada para "<span id="search-term"></span>"</div>
+
+</div><!-- /body -->
+
+<script>
+// ── SERVER STATUS CHECK ──
+async function checkServer(port, dotId, lblId) {
+  const dot = document.getElementById(dotId);
+  const lbl = document.getElementById(lblId);
+  try {
+    const r = await fetch(`http://localhost:${port}/`, { signal: AbortSignal.timeout(2000), mode: 'no-cors' });
+    dot.className = 'srv-dot on';
+    lbl.textContent = `:${port} ONLINE`;
+  } catch(e) {
+    // no-cors fetch to same origin might throw even if up — try data endpoint
+    try {
+      const r2 = await fetch(`http://localhost:${port}/amazonia_legal/data/last_bridge.json`,
+        { signal: AbortSignal.timeout(2000) });
+      dot.className = 'srv-dot on';
+      lbl.textContent = `:${port} ONLINE`;
+    } catch(e2) {
+      dot.className = 'srv-dot off';
+      lbl.textContent = `:${port} OFFLINE`;
+    }
+  }
+}
+
+function checkServers() {
+  checkServer(8888, 'dot-8888', 'lbl-8888');
+  checkServer(8765, 'dot-8765', 'lbl-8765');
+}
+checkServers();
+setInterval(checkServers, 30000);
+
+// ── CLOCK ──
+setInterval(() => {
+  document.getElementById('srv-clock').textContent = new Date().toLocaleTimeString('pt-BR');
+}, 1000);
+
+// ── SEARCH / FILTER ──
+function filterCards(q) {
+  q = q.toLowerCase().trim();
+  const cards = document.querySelectorAll('.card');
+  let visible = 0;
+  cards.forEach(c => {
+    const search = (c.dataset.search || '') + ' ' + (c.querySelector('.card-title')?.textContent || '') + ' ' + (c.querySelector('.card-desc')?.textContent || '');
+    const match = !q || search.toLowerCase().includes(q);
+    c.classList.toggle('hidden', !match);
+    if (match) visible++;
+  });
+  // Hide empty zone titles
+  document.querySelectorAll('.zone').forEach(z => {
+    const anyVisible = [...z.querySelectorAll('.card')].some(c => !c.classList.contains('hidden'));
+    z.style.display = (q && !anyVisible) ? 'none' : '';
+  });
+  const noRes = document.getElementById('no-results');
+  noRes.style.display = (q && visible === 0) ? 'block' : 'none';
+  document.getElementById('search-term').textContent = q;
+}
+
+// ── KEYBOARD SHORTCUT: / to focus search ──
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== document.getElementById('search-box')) {
+    e.preventDefault();
+    document.getElementById('search-box').focus();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('search-box').value = '';
+    filterCards('');
+    document.getElementById('search-box').blur();
+  }
+});
+</script>
+
+</body>
+</html>

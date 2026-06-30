@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>N.Q.G. TRIARQUIA — CLASSE MAESTRO</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+  canvas { display: block; }
+
+  #hud {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 10;
+  }
+
+  /* TITLE */
+  #title {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    text-align: center; pointer-events: none;
+  }
+  #title h1 {
+    font-size: 22px; letter-spacing: 6px; color: #00f2ff;
+    text-shadow: 0 0 20px #00f2ff, 0 0 40px #00f2ff;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  #title p { font-size: 11px; color: #ffd700; letter-spacing: 3px; margin-top: 4px; }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.7; }
+  }
+
+  /* PANELS */
+  .panel {
+    position: fixed; background: rgba(0,10,20,0.85);
+    border: 1px solid #00f2ff33; padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .panel-title {
+    font-size: 9px; letter-spacing: 3px; color: #ffd700;
+    border-bottom: 1px solid #ffd70033; padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .stat { display: flex; justify-content: space-between; margin: 6px 0; font-size: 11px; }
+  .stat-label { color: #8899aa; }
+  .stat-value { color: #00f2ff; font-weight: bold; }
+  .stat-value.gold { color: #ffd700; }
+  .stat-value.green { color: #00ff88; }
+  .stat-value.red { color: #ff4444; }
+
+  /* LEFT PANEL */
+  #panel-left {
+    left: 20px; top: 50%; transform: translateY(-50%);
+    width: 220px;
+  }
+
+  /* RIGHT PANEL */
+  #panel-right {
+    right: 20px; top: 50%; transform: translateY(-50%);
+    width: 220px;
+  }
+
+  /* BOTTOM BAR */
+  #panel-bottom {
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    width: 700px; display: flex; gap: 20px; padding: 14px 20px;
+    border: 1px solid #ffd70033;
+    background: rgba(0,10,20,0.9);
+  }
+  .node {
+    flex: 1; text-align: center; padding: 8px;
+    border: 1px solid transparent; border-radius: 4px;
+    transition: all 0.3s;
+  }
+  .node.alpha { border-color: #ff6600aa; }
+  .node.beta  { border-color: #00f2ffaa; }
+  .node.gamma { border-color: #aa44ffaa; }
+  .node-label { font-size: 9px; letter-spacing: 2px; margin-bottom: 4px; }
+  .node.alpha .node-label { color: #ff6600; }
+  .node.beta  .node-label { color: #00f2ff; }
+  .node.gamma .node-label { color: #aa44ff; }
+  .node-status { font-size: 10px; color: #00ff88; }
+  .node-sub { font-size: 9px; color: #556677; margin-top: 2px; }
+
+  /* MODE BUTTONS */
+  #controls {
+    position: fixed; top: 100px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; pointer-events: all; z-index: 20;
+  }
+  .btn {
+    padding: 6px 16px; font-size: 10px; letter-spacing: 2px;
+    background: transparent; cursor: pointer; transition: all 0.2s;
+    font-family: 'Courier New', monospace;
+  }
+  .btn.active, .btn:hover {
+    background: rgba(0,242,255,0.15);
+  }
+  .btn.mode-solid    { border: 1px solid #00f2ff; color: #00f2ff; }
+  .btn.mode-wire     { border: 1px solid #ffd700; color: #ffd700; }
+  .btn.mode-holo     { border: 1px solid #aa44ff; color: #aa44ff; }
+  .btn.mode-diamond  { border: 1px solid #00ff88; color: #00ff88; }
+
+  /* SCANNER LINE */
+  #scanner {
+    position: fixed; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, #00f2ff44, #00f2ff, #00f2ff44, transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none; z-index: 5;
+  }
+  @keyframes scan { from { top: 0; } to { top: 100%; } }
+
+  /* CORNER BRACKETS */
+  .corner { position: fixed; width: 40px; height: 40px; }
+  .corner.tl { top: 10px; left: 10px; border-top: 2px solid #00f2ff; border-left: 2px solid #00f2ff; }
+  .corner.tr { top: 10px; right: 10px; border-top: 2px solid #00f2ff; border-right: 2px solid #00f2ff; }
+  .corner.bl { bottom: 10px; left: 10px; border-bottom: 2px solid #00f2ff; border-left: 2px solid #00f2ff; }
+  .corner.br { bottom: 10px; right: 10px; border-bottom: 2px solid #00f2ff; border-right: 2px solid #00f2ff; }
+
+  /* ALERT BLINK */
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* PROGRESS BAR */
+  .bar-wrap { background: #0a1a2a; height: 4px; border-radius: 2px; margin-top: 4px; }
+  .bar-fill { height: 4px; border-radius: 2px; transition: width 1s; }
+  .bar-cyan  { background: linear-gradient(90deg, #004466, #00f2ff); }
+  .bar-gold  { background: linear-gradient(90deg, #443300, #ffd700); }
+  .bar-green { background: linear-gradient(90deg, #004422, #00ff88); }
+</style>
+</head>
+<body>
+
+<!-- THREE.JS CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- SCANNER -->
+<div id="scanner"></div>
+
+<!-- CORNER BRACKETS -->
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<!-- TITLE -->
+<div id="title">
+  <h1>N.Q.G. TRIARQUIA — CLASSE MAESTRO</h1>
+  <p>SYNAPSE HUB v3.0 · REDOMA-Q · SOBERANIA DE BORDA · ESALQ/USP</p>
+</div>
+
+<!-- MODE CONTROLS -->
+<div id="controls">
+  <button class="btn mode-solid active" onclick="setMode('solid')">SÓLIDO</button>
+  <button class="btn mode-wire" onclick="setMode('wire')">WIREFRAME</button>
+  <button class="btn mode-holo" onclick="setMode('holo')">HOLOGRÁFICO</button>
+  <button class="btn mode-diamond" onclick="setMode('diamond')">DIAMANTE</button>
+</div>
+
+<!-- LEFT PANEL — TELEMETRIA -->
+<div class="panel" id="panel-left">
+  <div class="panel-title">◈ TELEMETRIA SOBERANA</div>
+  <div class="stat"><span class="stat-label">SHA256 LATENCY</span><span class="stat-value">23.36ms</span></div>
+  <div class="bar-wrap"><div class="bar-fill bar-cyan" style="width:23%"></div></div>
+  <div class="stat"><span class="stat-label">COMPRESSÃO</span><span class="stat-value gold">411x</span></div>
+  <div class="bar-wrap"><div class="bar-fill bar-gold" style="width:95%"></div></div>
+  <div class="stat"><span class="stat-label">RAM VAULT</span><span class="stat-value">7.4 GB</span></div>
+  <div class="bar-wrap"><div class="bar-fill bar-cyan" style="width:74%"></div></div>
+  <div class="stat"><span class="stat-label">DOCS OBSIDIAN</span><span class="stat-value gold">95+</span></div>
+  <div class="stat"><span class="stat-label">TESTES TDD</span><span class="stat-value green">6/6 ✓</span></div>
+  <div class="bar-wrap"><div class="bar-fill bar-green" style="width:100%"></div></div>
+  <div class="stat"><span class="stat-label">SINCRO DIAMANTE</span><span class="stat-value green blink">◉ ATIVO</span></div>
+  <div class="stat"><span class="stat-label">VAULT /opt/</span><span class="stat-value green">OPERACIONAL</span></div>
+  <div class="stat"><span class="stat-label">CRIPTOGRAFIA</span><span class="stat-value">ED25519</span></div>
+</div>
+
+<!-- RIGHT PANEL — MISSÃO -->
+<div class="panel" id="panel-right">
+  <div class="panel-title">◈ MISSÃO SEBRAE 08/05</div>
+  <div class="stat"><span class="stat-label">PARCEIRA</span><span class="stat-value gold">MOONDO BIOTECH</span></div>
+  <div class="stat"><span class="stat-label">CAPTAÇÃO MOONDO</span><span class="stat-value gold">R$ 4,28 Mi</span></div>
+  <div class="stat"><span class="stat-label">RISCO POR LOTE</span><span class="stat-value red">R$ 150k</span></div>
+  <div class="stat"><span class="stat-label">LATÊNCIA EDGE</span><span class="stat-value green">23ms local</span></div>
+  <div class="stat"><span class="stat-label">vs AWS</span><span class="stat-value red">~500ms</span></div>
+  <div class="stat"><span class="stat-label">REDUÇÃO CLOUD</span><span class="stat-value green">85%</span></div>
+  <div class="bar-wrap"><div class="bar-fill bar-green" style="width:85%"></div></div>
+  <div class="stat"><span class="stat-label">ASK SEBRAE</span><span class="stat-value gold">R$ 250k</span></div>
+  <div class="stat"><span class="stat-label">ARR ANO 3</span><span class="stat-value">R$ 1,2 Mi</span></div>
+  <div class="stat"><span class="stat-label">BREAKEVEN</span><span class="stat-value green">12 meses</span></div>
+  <div class="stat" style="margin-top:10px"><span class="stat-label">STATUS</span><span class="stat-value green blink">◉ PRONTO</span></div>
+</div>
+
+<!-- BOTTOM — TRIARQUIA -->
+<div class="panel" id="panel-bottom">
+  <div class="node alpha">
+    <div class="node-label">⚡ ALPHA · DAEMON</div>
+    <div class="node-status">◉ ORQUESTRANDO</div>
+    <div class="node-sub">Kernel · Cron · Sysctl</div>
+    <div class="node-sub">antigravity_daemon.sh</div>
+  </div>
+  <div class="node beta">
+    <div class="node-label">🔬 BETA · LÂMINA</div>
+    <div class="node-status">◉ AUDITANDO</div>
+    <div class="node-sub">Stress CPU/RAM</div>
+    <div class="node-sub">burn_ram_chronicles.py</div>
+  </div>
+  <div class="node gamma">
+    <div class="node-label">🔮 GAMMA · ORÁCULO</div>
+    <div class="node-status">◉ ANALISANDO</div>
+    <div class="node-sub">Claude Code · Gemini</div>
+    <div class="node-sub">Vault · Obsidian Graph</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// THREE.JS SCENE SETUP
+// ═══════════════════════════════════════════════════════
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.set(0, 2, 10);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+// ═══════════════════════════════════════════════════════
+// STARFIELD
+// ═══════════════════════════════════════════════════════
+const starGeo = new THREE.BufferGeometry();
+const starCount = 8000;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) starPos[i] = (Math.random() - 0.5) * 1000;
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, sizeAttenuation: true });
+scene.add(new THREE.Points(starGeo, starMat));
+
+// ═══════════════════════════════════════════════════════
+// LIGHTING
+// ═══════════════════════════════════════════════════════
+scene.add(new THREE.AmbientLight(0x001122, 0.5));
+const pointCyan = new THREE.PointLight(0x00f2ff, 3, 30);
+pointCyan.position.set(5, 5, 5);
+scene.add(pointCyan);
+const pointGold = new THREE.PointLight(0xffd700, 2, 20);
+pointGold.position.set(-5, -3, 3);
+scene.add(pointGold);
+const pointPurple = new THREE.PointLight(0x8844ff, 2, 20);
+pointPurple.position.set(0, 8, -5);
+scene.add(pointPurple);
+
+// ═══════════════════════════════════════════════════════
+// SHIP PARTS GROUP
+// ═══════════════════════════════════════════════════════
+const shipGroup = new THREE.Group();
+scene.add(shipGroup);
+
+// MATERIALS
+const mats = {
+  solid: new THREE.MeshPhongMaterial({
+    color: 0x001833, emissive: 0x002244, specular: 0x00f2ff,
+    shininess: 100, side: THREE.DoubleSide
+  }),
+  wire: new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true }),
+  holo: new THREE.MeshPhongMaterial({
+    color: 0x00f2ff, emissive: 0x003355, specular: 0xffffff,
+    shininess: 200, transparent: true, opacity: 0.35,
+    side: THREE.DoubleSide, wireframe: false
+  }),
+  diamond: new THREE.MeshPhongMaterial({
+    color: 0xffffff, emissive: 0x113355, specular: 0x00f2ff,
+    shininess: 300, transparent: true, opacity: 0.8, side: THREE.DoubleSide
+  })
+};
+let activeMat = mats.solid;
+
+function buildShip(mat) {
+  shipGroup.clear();
+
+  // FUSELAGEM PRINCIPAL
+  const bodyGeo = new THREE.CylinderGeometry(0.5, 0.7, 4, 16);
+  const body = new THREE.Mesh(bodyGeo, mat);
+  body.rotation.x = Math.PI / 2;
+  shipGroup.add(body);
+
+  // NARIZ
+  const noseGeo = new THREE.ConeGeometry(0.5, 2, 16);
+  const nose = new THREE.Mesh(noseGeo, mat);
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.z = -3;
+  shipGroup.add(nose);
+
+  // CAUDA
+  const tailGeo = new THREE.CylinderGeometry(0.7, 0.4, 1.2, 16);
+  const tail = new THREE.Mesh(tailGeo, mat);
+  tail.rotation.x = Math.PI / 2;
+  tail.position.z = 2.6;
+  shipGroup.add(tail);
+
+  // ASAS PRINCIPAIS
+  const wingShape = new THREE.Shape();
+  wingShape.moveTo(0, 0);
+  wingShape.lineTo(0, -0.3);
+  wingShape.lineTo(4, -1.2);
+  wingShape.lineTo(4.5, 0);
+  wingShape.lineTo(2, 0.2);
+  wingShape.lineTo(0, 0);
+  const wingGeo = new THREE.ExtrudeGeometry(wingShape, { depth: 0.06, bevelEnabled: false });
+  [-1, 1].forEach(side => {
+    const wing = new THREE.Mesh(wingGeo, mat);
+    wing.rotation.y = side === -1 ? 0 : Math.PI;
+    wing.rotation.x = Math.PI / 2;
+    wing.position.set(side * 0.4, 0, 0.5);
+    shipGroup.add(wing);
+  });
+
+  // ASAS TRASEIRAS
+  const sWingShape = new THREE.Shape();
+  sWingShape.moveTo(0, 0);
+  sWingShape.lineTo(0, 0.2);
+  sWingShape.lineTo(2.2, 0.8);
+  sWingShape.lineTo(2.5, 0);
+  sWingShape.lineTo(0, 0);
+  const sWingGeo = new THREE.ExtrudeGeometry(sWingShape, { depth: 0.05, bevelEnabled: false });
+  [-1, 1].forEach(side => {
+    const sw = new THREE.Mesh(sWingGeo, mat);
+    sw.rotation.y = side === -1 ? 0 : Math.PI;
+    sw.rotation.x = Math.PI / 2;
+    sw.position.set(side * 0.4, 0, 2.2);
+    shipGroup.add(sw);
+  });
+
+  // COCKPIT (esfera)
+  const cockpitGeo = new THREE.SphereGeometry(0.3, 16, 12);
+  const cockpitMat = new THREE.MeshPhongMaterial({
+    color: 0x00aaff, emissive: 0x002244, specular: 0xffffff,
+    shininess: 400, transparent: true, opacity: 0.8
+  });
+  const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+  cockpit.position.set(0, 0.4, -1.5);
+  shipGroup.add(cockpit);
+
+  // MOTORES
+  [[-0.8, 2.2], [0.8, 2.2], [0, 2.4]].forEach(([x, z]) => {
+    const engGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.5, 12);
+    const eng = new THREE.Mesh(engGeo, mat);
+    eng.rotation.x = Math.PI / 2;
+    eng.position.set(x, -0.15, z);
+    shipGroup.add(eng);
+
+    // Engine glow
+    const glowGeo = new THREE.SphereGeometry(0.15, 8, 8);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.8 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.set(x, -0.15, z + 0.35);
+    glow.userData.isGlow = true;
+    shipGroup.add(glow);
+  });
+
+  // DIAMOND RING (modo diamante)
+  if (activeMat === mats.diamond) {
+    const ringGeo = new THREE.TorusGeometry(2.5, 0.06, 8, 60);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    shipGroup.add(ring);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TRIARQUIA NODES
+// ═══════════════════════════════════════════════════════
+const nodeData = [
+  { label: 'Α', color: 0xff6600, emissive: 0x441100, r: 5, angle: 0, speed: 0.3 },
+  { label: 'Β', color: 0x00f2ff, emissive: 0x001133, r: 5, angle: 2.1, speed: 0.3 },
+  { label: 'Γ', color: 0xaa44ff, emissive: 0x220044, r: 5, angle: 4.2, speed: 0.3 },
+];
+const nodeObjs = nodeData.map(n => {
+  const geo = new THREE.OctahedronGeometry(0.4, 0);
+  const mat = new THREE.MeshPhongMaterial({ color: n.color, emissive: n.emissive, shininess: 200 });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+  // orbit ring
+  const ringGeo = new THREE.TorusGeometry(n.r, 0.02, 6, 80);
+  const ringMat = new THREE.MeshBasicMaterial({ color: n.color, transparent: true, opacity: 0.25 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI * (0.1 + nodeData.indexOf(n) * 0.12);
+  scene.add(ring);
+  return { mesh, ...n };
+});
+
+// ═══════════════════════════════════════════════════════
+// ENGINE EXHAUST PARTICLES
+// ═══════════════════════════════════════════════════════
+const exhaustGeo = new THREE.BufferGeometry();
+const exhaustCount = 300;
+const exhaustPos = new Float32Array(exhaustCount * 3);
+const exhaustLife = new Float32Array(exhaustCount);
+for (let i = 0; i < exhaustCount; i++) exhaustLife[i] = Math.random();
+exhaustGeo.setAttribute('position', new THREE.BufferAttribute(exhaustPos, 3));
+const exhaustMat = new THREE.PointsMaterial({ color: 0x00aaff, size: 0.08, transparent: true, opacity: 0.7 });
+const exhaustParticles = new THREE.Points(exhaustGeo, exhaustMat);
+scene.add(exhaustParticles);
+
+// ═══════════════════════════════════════════════════════
+// GRID FLOOR
+// ═══════════════════════════════════════════════════════
+const gridHelper = new THREE.GridHelper(30, 30, 0x00f2ff11, 0x00f2ff11);
+gridHelper.position.y = -4;
+scene.add(gridHelper);
+
+// ═══════════════════════════════════════════════════════
+// BUILD INITIAL SHIP
+// ═══════════════════════════════════════════════════════
+buildShip(activeMat);
+
+// ═══════════════════════════════════════════════════════
+// MODE SWITCHER
+// ═══════════════════════════════════════════════════════
+window.setMode = function(mode) {
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.btn.mode-' + mode).classList.add('active');
+  activeMat = mats[mode] || mats.solid;
+  buildShip(activeMat);
+};
+
+// ═══════════════════════════════════════════════════════
+// MOUSE DRAG ROTATION
+// ═══════════════════════════════════════════════════════
+let isDragging = false, prevX = 0, prevY = 0;
+let rotX = 0.15, rotY = 0;
+renderer.domElement.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+renderer.domElement.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  rotY += (e.clientX - prevX) * 0.005;
+  rotX += (e.clientY - prevY) * 0.005;
+  prevX = e.clientX; prevY = e.clientY;
+});
+// Touch
+renderer.domElement.addEventListener('touchstart', e => { isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; });
+renderer.domElement.addEventListener('touchend', () => isDragging = false);
+renderer.domElement.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  rotY += (e.touches[0].clientX - prevX) * 0.005;
+  rotX += (e.touches[0].clientY - prevY) * 0.005;
+  prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+});
+
+// SCROLL ZOOM
+renderer.domElement.addEventListener('wheel', e => {
+  camera.position.z = Math.max(4, Math.min(20, camera.position.z + e.deltaY * 0.01));
+});
+
+// ═══════════════════════════════════════════════════════
+// ANIMATE
+// ═══════════════════════════════════════════════════════
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.016;
+
+  // Ship rotation
+  if (!isDragging) rotY += 0.004;
+  shipGroup.rotation.y = rotY;
+  shipGroup.rotation.x = rotX;
+  shipGroup.position.y = Math.sin(t * 0.7) * 0.15;
+
+  // Engine glow pulse
+  shipGroup.children.forEach(c => {
+    if (c.userData.isGlow) {
+      c.material.opacity = 0.5 + Math.sin(t * 8) * 0.3;
+      c.scale.setScalar(0.8 + Math.sin(t * 6) * 0.3);
+    }
+  });
+
+  // Triarquia nodes orbit
+  nodeObjs.forEach(n => {
+    n.angle += n.speed * 0.016;
+    n.mesh.position.x = Math.cos(n.angle) * n.r;
+    n.mesh.position.y = Math.sin(n.angle * 0.4) * 1.5;
+    n.mesh.position.z = Math.sin(n.angle) * n.r;
+    n.mesh.rotation.y += 0.04;
+    n.mesh.rotation.x += 0.02;
+  });
+
+  // Exhaust particles
+  const pos = exhaustParticles.geometry.attributes.position.array;
+  for (let i = 0; i < exhaustCount; i++) {
+    exhaustLife[i] -= 0.02;
+    if (exhaustLife[i] <= 0) {
+      exhaustLife[i] = 1;
+      pos[i*3]   = (Math.random()-0.5)*0.3;
+      pos[i*3+1] = (Math.random()-0.5)*0.3 - 0.15;
+      pos[i*3+2] = 2.4;
+    }
+    pos[i*3+2] += 0.08;
+    pos[i*3]   += (Math.random()-0.5)*0.01;
+  }
+  exhaustParticles.geometry.attributes.position.needsUpdate = true;
+  // Sync exhaust with ship
+  exhaustParticles.position.copy(shipGroup.position);
+  exhaustParticles.rotation.copy(shipGroup.rotation);
+
+  // Lights pulsing
+  pointCyan.intensity = 2.5 + Math.sin(t * 2) * 0.5;
+  pointGold.intensity = 1.8 + Math.sin(t * 1.3 + 1) * 0.4;
+
+  // Grid slow rotation
+  gridHelper.rotation.y += 0.001;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// RESIZE
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

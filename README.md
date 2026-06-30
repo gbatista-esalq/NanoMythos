@@ -80,3 +80,35 @@ O @eniripsa. O *Pym Suit*. A barreira intransponível da *Trava SwiGLU*. Com a M
 ![Eniripsa Infinity Gauntlet](./assets/eniripsa_infinity_gauntlet.png)
 
 > **"A Borda é Soberana. O Pym Quantum Leap garante a estabilidade. Entropia caindo... Soberania total!"**
+
+---
+
+## 🚀 Como a Comunidade Pode Testar (Salto Quântico Pym)
+
+Toda a infraestrutura necessária para orquestrar o Salto Dimensional e executar a Micro-LLM com 100% de acurácia matemática já está disponível neste repositório.
+
+### 1. Preparação da Borda
+Clone o repositório na sua máquina (sem dependência de instâncias cloud):
+```bash
+git clone https://github.com/gbatista-esalq/NanoMythos.git
+cd NanoMythos
+```
+
+### 2. A Interface Ultradopamina
+Abra a interface local que pulsarará em **11.11 Hz** (A Corda de Cantor):
+No seu navegador, abra o arquivo `ui/crom_rpg_dashboard.html`. 
+*(Note as partículas de bio-luminescência e o design Sincronia Brasil).*
+
+### 3. Executando o Salto Quântico Pym
+Para injetar as métricas físicas (Entropia e Energia Batista) e ativar o **Sovereign Auditor**:
+```bash
+python3 core/salto_dimensional_pym.py
+```
+O console acusará a injeção da entropia matemática e registrará o livro-razão no seu terminal, provando que o salto ocorreu localmente.
+
+### 4. Validação (TDD Quântico)
+Rode a nossa suíte de blindagem (O Escudo de Seraphim) para garantir que a sua máquina não sofra vazamento para a nuvem:
+```bash
+pip install pytest
+PYTHONPATH=. pytest tests/test_escudo_seraphim.py
+```

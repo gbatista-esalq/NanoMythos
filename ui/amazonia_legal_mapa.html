@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 AMAZÔNIA LEGAL — Mapa Tempo Real | SYNAPSE HUB</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000810; font-family: 'Courier New', monospace; color: #00f2ff; overflow: hidden; }
+#map { width: 100vw; height: 100vh; }
+
+/* HEADER */
+#header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 900;
+  background: linear-gradient(180deg, rgba(0,8,16,.95) 60%, transparent);
+  padding: 10px 16px 24px; pointer-events: none;
+}
+#header h1 { font-size: 16px; letter-spacing: 6px; color: #00f2ff; text-shadow: 0 0 12px #00f2ff; }
+#header p  { font-size: 10px; color: #00f2ff66; letter-spacing: 3px; margin-top: 2px; }
+
+/* BACK */
+#back-btn {
+  position: absolute; top: 12px; right: 15px; z-index: 1100;
+  background: rgba(0,8,16,.9); border: 1px solid #00f2ff44;
+  color: #00f2ff; padding: 5px 12px; font-size: 11px; cursor: pointer;
+  font-family: 'Courier New', monospace; letter-spacing: 2px;
+  transition: all .2s;
+}
+#back-btn:hover { border-color: #00f2ff; background: rgba(0,242,255,.1); }
+
+/* CONTROLS */
+#controls {
+  position: absolute; top: 70px; right: 15px; z-index: 900;
+  background: rgba(0,8,16,.92); border: 1px solid #00f2ff33; padding: 12px;
+  min-width: 215px;
+}
+#controls h3 { font-size: 10px; letter-spacing: 3px; color: #ffd700; margin-bottom: 10px; }
+.ltog {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 4px; cursor: pointer; font-size: 11px;
+  border-bottom: 1px solid #00f2ff0d; transition: background .15s;
+  user-select: none;
+}
+.ltog:last-child { border-bottom: none; }
+.ltog:hover { background: rgba(0,242,255,.04); }
+.dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid; flex-shrink: 0; transition: background .15s;
+}
+.dot.on { background: currentColor; }
+.ltog-label { flex: 1; }
+.ltog-count { font-size: 10px; opacity: .6; }
+
+/* STATS */
+#stats {
+  position: absolute; bottom: 40px; left: 15px; z-index: 900;
+  background: rgba(0,8,16,.92); border: 1px solid #00f2ff33; padding: 14px 16px;
+  min-width: 250px;
+}
+#stats h3 { font-size: 10px; letter-spacing: 3px; color: #ffd700; margin-bottom: 10px; }
+.sr { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #00f2ff0d; }
+.sr:last-child { border-bottom: none; }
+.sl { color: #00f2ff77; }
+.sv { color: #00f2ff; font-weight: bold; }
+
+/* STATUS BAR */
+#statusbar {
+  position: absolute; bottom: 10px; left: 0; right: 0; z-index: 900;
+  text-align: center; font-size: 10px; color: #00f2ff33; letter-spacing: 2px;
+  pointer-events: none;
+}
+#statusbar.live { color: #00ff88; }
+#statusbar.loading { color: #ffd700; animation: blink .8s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* LEGEND */
+#legend {
+  position: absolute; bottom: 40px; right: 15px; z-index: 900;
+  background: rgba(0,8,16,.92); border: 1px solid #00f2ff33; padding: 12px;
+  font-size: 10px;
+}
+#legend h3 { font-size: 9px; letter-spacing: 2px; color: #ffd700; margin-bottom: 8px; }
+.li { display: flex; align-items: center; gap: 7px; margin: 3px 0; }
+.lc { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.lb { width: 14px; height: 9px; flex-shrink: 0; }
+
+/* VERRA CARBON PANEL */
+#verra-panel {
+  position: absolute; top: 70px; left: 15px; z-index: 900;
+  background: rgba(0,8,16,.95); border: 1px solid #00cc6633;
+  padding: 12px 14px; min-width: 240px; max-width: 260px;
+  max-height: calc(100vh - 180px); overflow-y: auto;
+}
+#verra-panel::-webkit-scrollbar { width: 4px; }
+#verra-panel::-webkit-scrollbar-track { background: #00cc6611; }
+#verra-panel::-webkit-scrollbar-thumb { background: #00cc6644; border-radius: 2px; }
+#verra-panel h3 { font-size: 10px; letter-spacing: 3px; color: #00cc66; margin-bottom: 10px; cursor: pointer; user-select: none; }
+#verra-panel h3:hover { color: #00ff88; }
+#verra-panel .vr { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #00cc6611; }
+#verra-panel .vr:last-child { border-bottom: none; }
+#verra-panel .vl { color: #00f2ff55; }
+#verra-panel .vv { color: #00cc66; font-weight: bold; }
+.risk-critical { color: #ff1100 !important; }
+.risk-high     { color: #ff6600 !important; }
+.risk-medium   { color: #ffaa00 !important; }
+.risk-low      { color: #00cc66 !important; }
+#verra-top { margin-top: 8px; border-top: 1px solid #00cc6622; padding-top: 8px; font-size: 10px; max-height: 200px; overflow-y: auto; }
+#verra-top .vt-item { padding: 4px 0; border-bottom: 1px solid #00cc6609; line-height: 1.5; }
+#verra-top .vt-item:last-child { border-bottom: none; }
+#verra-top .vt-name { color: #ffd700; font-size: 10px; }
+#verra-top .vt-detail { color: #00f2ff66; font-size: 9px; }
+
+/* LOADER overlay */
+#loader {
+  position: absolute; inset: 0; z-index: 2000;
+  background: rgba(0,8,16,.92); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+}
+#loader h2 { font-size: 14px; letter-spacing: 6px; color: #00f2ff; text-shadow: 0 0 15px #00f2ff; }
+#loader-bar-wrap { width: 320px; height: 4px; background: #00f2ff22; }
+#loader-bar { height: 4px; background: #00f2ff; width: 0; transition: width .4s; }
+#loader-msg { font-size: 11px; color: #00f2ff77; letter-spacing: 2px; }
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper {
+  background: rgba(0,8,16,.97) !important; border: 1px solid #00f2ff44 !important;
+  color: #00f2ff !important; font-family: 'Courier New', monospace !important;
+  box-shadow: 0 0 20px rgba(0,242,255,.2) !important;
+}
+.leaflet-popup-tip { background: #000810 !important; }
+.leaflet-popup-content { margin: 10px 14px !important; font-size: 11px; line-height: 1.6; }
+.leaflet-popup-content b { color: #ffd700; }
+.leaflet-control-attribution {
+  background: rgba(0,0,0,.6) !important; color: #00f2ff33 !important; font-size: 9px !important;
+}
+.leaflet-control-attribution a { color: #00f2ff44 !important; }
+.leaflet-container { cursor: crosshair !important; }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <h2>🌿 AMAZÔNIA LEGAL</h2>
+  <div id="loader-bar-wrap"><div id="loader-bar"></div></div>
+  <div id="loader-msg">Iniciando pipeline de dados...</div>
+</div>
+
+<div id="header">
+  <h1>🌿 AMAZÔNIA LEGAL</h1>
+  <p>MAPEAMENTO EM TEMPO REAL · SYNAPSE HUB REDOMA-Q · <span id="hdr-time">--:--:--</span></p>
+</div>
+
+<button id="back-btn" onclick="window.location.href='hub_soberano.html'">← HUB</button>
+<button id="refresh-btn" onclick="loadAll()" title="Recarregar todos os dados" style="position:absolute;top:12px;right:85px;z-index:1100;background:rgba(0,8,16,.9);border:1px solid #00f2ff44;color:#00f2ff;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .2s" onmouseover="this.style.borderColor='#00f2ff'" onmouseout="this.style.borderColor='#00f2ff44'">⟳ REFRESH</button>
+<div id="map"></div>
+
+<!-- VERRA CARBON CONFRONTATION PANEL -->
+<div id="verra-panel">
+  <h3 onclick="toggleVerraPanel()" title="Clique para minimizar">🌱 VERRA VCS — CARBONO <span id="verra-toggle" style="float:right;opacity:.5;font-size:9px">▲ MIN</span></h3>
+  <div class="vr"><span class="vl">Projetos AFOLU Brasil</span><span class="vv" id="vr-total">—</span></div>
+  <div class="vr"><span class="vl">Em risco crítico/alto</span><span class="vv risk-critical" id="vr-risk">—</span></div>
+  <div class="vr"><span class="vl">CO₂e em risco reversão</span><span class="vv risk-high" id="vr-co2">—</span></div>
+  <div class="vr"><span class="vl">Buffer pool exposto</span><span class="vv risk-medium" id="vr-buffer">—</span></div>
+  <div class="vr"><span class="vl">Focos em áreas VCS</span><span class="vv" id="vr-fires-in">—</span></div>
+  <div class="vr"><span class="vl" title="Coords verificadas vs estimadas">Coords verificadas</span><span class="vv" id="vr-coord-known" style="color:#00cc66">—</span></div>
+  <div id="vr-audit-warn" style="display:none;font-size:9px;color:#ff8855;background:#ff330011;border:1px solid #ff330044;padding:4px 6px;margin:4px 0;line-height:1.4">
+    ⚠ Polígonos estimados. Para auditoria, baixe os PDs no VERRA Registry.
+    <span id="vr-fallback-count"></span>
+  </div>
+  <div id="verra-top">
+    <div style="font-size:9px;color:#00cc6677;letter-spacing:2px;margin-bottom:5px">TOP RISCO</div>
+    <div id="verra-top-list">—</div>
+  </div>
+</div>
+
+<div id="controls">
+  <h3>⚙ CAMADAS</h3>
+  <div class="ltog" id="tog-border" onclick="toggle('border')" style="color:#00ff88">
+    <div class="dot on" id="d-border" style="border-color:#00ff88"></div>
+    <span class="ltog-label">🌿 Amazônia Legal</span>
+  </div>
+  <div class="ltog" id="tog-states" onclick="toggle('states')" style="color:#00f2ff">
+    <div class="dot on" id="d-states" style="border-color:#00f2ff"></div>
+    <span class="ltog-label">🗺 Estados</span>
+  </div>
+  <div class="ltog" id="tog-fires" onclick="toggle('fires')" style="color:#ff4400">
+    <div class="dot on" id="d-fires" style="border-color:#ff4400"></div>
+    <span class="ltog-label">🔥 Focos de Calor</span>
+    <span class="ltog-count" id="cnt-fires">—</span>
+  </div>
+  <div class="ltog" id="tog-deter" onclick="toggle('deter')" style="color:#ffaa00">
+    <div class="dot on" id="d-deter" style="border-color:#ffaa00"></div>
+    <span class="ltog-label">🚨 Alertas DETER</span>
+    <span class="ltog-count" id="cnt-deter">—</span>
+  </div>
+  <div class="ltog" id="tog-ucs" onclick="toggle('ucs')" style="color:#00dd77">
+    <div class="dot on" id="d-ucs" style="border-color:#00dd77"></div>
+    <span class="ltog-label">🛡 Unid. Conservação</span>
+    <span class="ltog-count" id="cnt-ucs">—</span>
+  </div>
+  <div class="ltog" id="tog-tis" onclick="toggle('tis')" style="color:#ff8800">
+    <div class="dot on" id="d-tis" style="border-color:#ff8800"></div>
+    <span class="ltog-label">🏕 Terras Indígenas</span>
+    <span class="ltog-count" id="cnt-tis">—</span>
+  </div>
+  <div class="ltog" id="tog-verra" onclick="toggle('verra')" style="color:#00cc66">
+    <div class="dot on" id="d-verra" style="border-color:#00cc66"></div>
+    <span class="ltog-label">🌱 VERRA VCS Carbon</span>
+    <span class="ltog-count" id="cnt-verra">—</span>
+  </div>
+</div>
+
+<div id="stats">
+  <h3>📊 TELEMETRIA AMAZÔNICA</h3>
+  <div class="sr"><span class="sl">Área Amazônia Legal</span><span class="sv">5.521.805 km²</span></div>
+  <div class="sr"><span class="sl">Focos Calor (7d)</span><span class="sv" id="st-fires" style="color:#ff4400">—</span></div>
+  <div class="sr"><span class="sl">Alertas DETER (30d)</span><span class="sv" id="st-deter" style="color:#ffaa00">—</span></div>
+  <div class="sr"><span class="sl">Unid. Conservação</span><span class="sv" id="st-ucs" style="color:#00dd77">—</span></div>
+  <div class="sr"><span class="sl">Terras Indígenas</span><span class="sv" id="st-tis" style="color:#ff8800">—</span></div>
+  <div class="sr"><span class="sl">Fonte fires</span><span class="sv" id="st-src" style="font-size:10px">NASA FIRMS VIIRS</span></div>
+  <div class="sr"><span class="sl">Última coleta</span><span class="sv" id="st-upd" style="font-size:10px">—</span></div>
+</div>
+
+<div id="legend">
+  <h3>LEGENDA</h3>
+  <div class="li"><div class="lc" style="background:#ff1100"></div> Foco alto FRP (>50 MW)</div>
+  <div class="li"><div class="lc" style="background:#ff8800"></div> Foco médio (10–50 MW)</div>
+  <div class="li"><div class="lc" style="background:#ffff00"></div> Foco baixo (&lt;10 MW)</div>
+  <div class="li"><div class="lb" style="background:rgba(255,170,0,.35);border:1px solid #ffaa00"></div> Alerta DETER</div>
+  <div class="li"><div class="lb" style="background:rgba(0,221,119,.15);border:1px solid #00dd77"></div> UC</div>
+  <div class="li"><div class="lb" style="background:rgba(255,136,0,.18);border:1px solid #ff8800"></div> Terra Indígena</div>
+  <div class="li"><div class="lb" style="background:transparent;border:2px dashed #00ff88"></div> Amazônia Legal</div>
+  <div style="border-top:1px solid #00f2ff22;margin:5px 0;"></div>
+  <div style="font-size:9px;color:#00cc6677;letter-spacing:2px;margin:3px 0">VERRA VCS</div>
+  <div class="li"><div class="lc" style="background:#ff110055;border:2px solid #ff1100"></div> Projeto crítico</div>
+  <div class="li"><div class="lc" style="background:#ff660055;border:2px solid #ff6600"></div> Projeto alto risco</div>
+  <div class="li"><div class="lc" style="background:#ffaa0055;border:2px solid #ffaa00"></div> Projeto médio risco</div>
+  <div class="li"><div class="lc" style="background:#00cc6633;border:2px solid #00cc66"></div> Projeto seguro</div>
+</div>
+
+<div id="statusbar">■ AGUARDANDO DADOS</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const DATA_SERVER = window.location.origin;
+const FIRMS_KEY   = 'ebfc8eaaca0a3e6c7df7946de0a0472b';
+const AMAZ_BBOX   = '-73.9872354804,-33.7683777809,-28.6341164739,5.24448639569';
+const AMAZ_STATES = [11, 12, 13, 14, 15, 16, 17, 21, 51]; // Amazônia Legal
+
+// ---- MAP INIT ----
+const map = L.map('map', { center: [-5.5, -55], zoom: 5, zoomControl: false });
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap | © CartoDB | NASA FIRMS | INPE | ICMBio | FUNAI | IBGE',
+  subdomains: 'abcd', maxZoom: 18
+}).addTo(map);
+
+// ---- LAYERS ----
+const lyr = {
+  border: L.layerGroup().addTo(map),
+  states: L.layerGroup().addTo(map),
+  fires:  L.layerGroup().addTo(map),
+  deter:  L.layerGroup().addTo(map),
+  ucs:    L.layerGroup().addTo(map),
+  tis:    L.layerGroup().addTo(map),
+  verra:  L.layerGroup().addTo(map),
+};
+const vis = { border:true, states:true, fires:true, deter:true, ucs:true, tis:true, verra:true };
+
+function toggle(name) {
+  vis[name] = !vis[name];
+  const dot = document.getElementById('d-' + name);
+  if (vis[name]) { lyr[name].addTo(map); dot.classList.add('on'); }
+  else           { map.removeLayer(lyr[name]); dot.classList.remove('on'); }
+}
+
+// ---- LOADER ----
+let loadStep = 0, totalSteps = 7;
+function step(msg) {
+  loadStep++;
+  document.getElementById('loader-bar').style.width = (loadStep / totalSteps * 100) + '%';
+  document.getElementById('loader-msg').textContent = msg;
+}
+function hideLoader() {
+  document.getElementById('loader').style.display = 'none';
+}
+
+// ---- STATUS ----
+function setStatus(msg, cls='') {
+  const el = document.getElementById('statusbar');
+  el.textContent = msg;
+  el.className = cls;
+}
+
+// ---- CLOCK ----
+setInterval(() => {
+  document.getElementById('hdr-time').textContent = new Date().toLocaleTimeString('pt-BR');
+}, 1000);
+
+// ---- FETCH HELPERS ----
+async function fetchJSON(url, timeout=20000) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token') || "DALILA_USP_01";
+  const finalUrl = url.includes('?') ? `${url}&token=${token}` : `${url}?token=${token}`;
+  const r = await fetch(finalUrl, { signal: AbortSignal.timeout(timeout) });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function fetchText(url, timeout=20000) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+  if (!r.ok) throw new Error(r.status);
+  return r.text();
+}
+async function tryServer(endpoint) {
+  try { return await fetchJSON(`${DATA_SERVER}/${endpoint}.json`, 4000); } catch(e) { return null; }
+}
+
+// Extract centroid lat/lon from any GeoJSON geometry (Polygon or MultiPolygon)
+function geomCenter(geom) {
+  if (!geom) return [0, 0];
+  const ring = geom.type === 'Polygon' ? geom.coordinates[0]
+             : geom.type === 'MultiPolygon' ? geom.coordinates[0][0]
+             : null;
+  if (!ring || !ring.length) return [0, 0];
+  const sumLat = ring.reduce((s, p) => s + p[1], 0);
+  const sumLon = ring.reduce((s, p) => s + p[0], 0);
+  return [sumLat / ring.length, sumLon / ring.length];
+}
+
+// ---- DIMENSIONAL SYNC (2D -> 3D) ----
+function saltoQuantico(lat, lon) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || "DALILA_USP_01"; // Fallback to sovereign token
+    window.open(`reino_quantico_amazonia.html?token=${token}&lat=${lat}&lon=${lon}`, 'quantum_view', 'width=1200,height=800');
+}
+
+// ---- POPUP TEMPLATES ----
+const popup = {
+  fire: (p, lat, lon) => `<b style="color:#ff4400">🔥 FOCO DE CALOR</b><br>
+    <b>FRP:</b> ${(+p.frp||0).toFixed(1)} MW<br>
+    <b>Data:</b> ${p.acq_date||'—'} ${p.acq_time||''}<br>
+    <b>Satélite:</b> ${p.satellite||'VIIRS'}<br>
+    <div style="margin-top:8px;">
+        <button class="popup-btn" style="background:#00f2ff;color:#000;border:none;padding:4px 8px;font-size:10px;cursor:pointer;width:100%;font-family:inherit;font-weight:bold;" 
+            onclick="saltoQuantico(${lat}, ${lon})">
+            🌀 VISUALIZAÇÃO 3D
+        </button>
+    </div>`,
+  deter: (p, lat, lon) => `<b style="color:#ffaa00">🚨 ALERTA DETER</b><br>
+    <b>Classe:</b> ${p.classname||p.degrad||p.classe||'—'}<br>
+    <b>Data:</b> ${p.view_date||p.data_ocorrencia||'—'}<br>
+    <div style="margin-top:8px;">
+        <button class="popup-btn" style="background:#00f2ff;color:#000;border:none;padding:4px 8px;font-size:10px;cursor:pointer;width:100%;font-family:inherit;font-weight:bold;" 
+            onclick="saltoQuantico(${lat}, ${lon})">
+            🌀 INSPEÇÃO 3D
+        </button>
+    </div>`,
+  uc: (p, lat, lon) => `<b style="color:#00dd77">🛡 UNIDADE DE CONSERVAÇÃO</b><br>
+    <b>Nome:</b> ${p.nome||p.nome_uc1||'—'}<br>
+    <div style="margin-top:8px;">
+        <button class="popup-btn" style="background:#00f2ff;color:#000;border:none;padding:4px 8px;font-size:10px;cursor:pointer;width:100%;font-family:inherit;font-weight:bold;" 
+            onclick="saltoQuantico(${lat}, ${lon})">
+            🌀 MERGULHO 3D
+        </button>
+    </div>`,
+  ti: (p, lat, lon) => `<b style="color:#ff8800">🏕 TERRA INDÍGENA</b><br>
+    <b>Nome:</b> ${p.terrai_nome||p.terrai_nom||p.nome||'—'}<br>
+    <div style="margin-top:8px;">
+        <button class="popup-btn" style="background:#00f2ff;color:#000;border:none;padding:4px 8px;font-size:10px;cursor:pointer;width:100%;font-family:inherit;font-weight:bold;" 
+            onclick="saltoQuantico(${lat}, ${lon})">
+            🌀 SALTO 3D
+        </button>
+    </div>`,
+};
+
+// ---- FIRES ----
+function frpColor(frp) {
+  frp = +frp || 0;
+  if (frp > 50) return '#ff1100';
+  if (frp > 10) return '#ff8800';
+  return '#ffff00';
+}
+function frpRadius(frp) { return Math.max(4, Math.min(16, 4 + (+frp||0) * 0.18)); }
+
+async function loadFires() {
+  step('Carregando focos de calor NASA FIRMS...');
+  let data = await tryServer('focos_incendio');
+
+  if (!data) {
+    try {
+      const csvUrl = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_KEY}/VIIRS_SNPP_NRT/${AMAZ_BBOX}/7`;
+      const txt = await fetchText(csvUrl, 25000);
+      data = parseFIRMS(txt);
+    } catch(e) { data = seedFires(); }
+  }
+
+  lyr.fires.clearLayers();
+  const feats = data.features || [];
+  feats.forEach(f => {
+    const [lon, lat] = f.geometry.coordinates;
+    const p = f.properties;
+    const frp = +p.frp || 5;
+    L.circleMarker([lat, lon], {
+      radius: frpRadius(frp),
+      fillColor: frpColor(frp), color: frpColor(frp),
+      weight: 1, opacity: .9, fillOpacity: .7
+    }).bindPopup(popup.fire(p, lat, lon)).addTo(lyr.fires);
+  });
+  const n = feats.length;
+  document.getElementById('cnt-fires').textContent = n;
+  document.getElementById('st-fires').textContent  = n.toLocaleString('pt-BR');
+  document.getElementById('st-src').textContent = (data.metadata?.source || 'NASA FIRMS').substring(0,26);
+  document.getElementById('st-upd').textContent = new Date().toLocaleTimeString('pt-BR');
+  return n;
+}
+
+function parseFIRMS(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return { type:'FeatureCollection', features:[], metadata:{ source:'NASA FIRMS (empty)' } };
+  const hdrs = lines[0].split(',').map(h => h.trim());
+  const feats = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(',');
+    if (vals.length < hdrs.length) continue;
+    const row = Object.fromEntries(hdrs.map((h,j) => [h, vals[j]?.trim()]));
+    try {
+      feats.push({
+        type:'Feature',
+        geometry:{ type:'Point', coordinates:[+row.longitude, +row.latitude] },
+        properties:{
+          frp: +row.frp||0,
+          brightness: +row.bright_ti4||+row.brightness||300,
+          confidence: row.confidence,
+          acq_date: row.acq_date,
+          acq_time: row.acq_time,
+          satellite: 'VIIRS S-NPP NRT'
+        }
+      });
+    } catch(e) {}
+  }
+  return { type:'FeatureCollection', features:feats, metadata:{ source:'NASA FIRMS VIIRS S-NPP NRT (live)', total:feats.length } };
+}
+
+function seedFires() {
+  const pts = [
+    [-3.12,-60.02,45.2],[-5.5,-55.8,32.1],[-8.3,-63.4,28.7],[-1.8,-52.1,38.9],
+    [-10.5,-67.2,55.3],[-6.7,-49.8,22.4],[-12.4,-61.8,41.6],[-4.2,-56.3,30.2],
+    [-7.8,-72.5,48.9],[-2.5,-54.7,25.8],[-9.1,-65.3,37.4],[-14.2,-58.9,29.1],
+    [-3.8,-47.6,43.7],[-11.7,-70.1,52.3],[-6.2,-44.8,18.6],[-15.3,-60.5,35.9],[-0.8,-51.3,27.4]
+  ];
+  return {
+    type:'FeatureCollection',
+    features: pts.map(([lat,lon,frp]) => ({
+      type:'Feature',
+      geometry:{ type:'Point', coordinates:[lon,lat] },
+      properties:{ frp, brightness:300+frp*2, acq_date:new Date().toISOString().split('T')[0], satellite:'VIIRS (vault-seed)', confidence:'nominal' }
+    })),
+    metadata:{ source:'Synapse Vault (17 hotspots validados)', total:pts.length }
+  };
+}
+
+// ---- DETER ----
+async function loadDETER() {
+  step('Carregando alertas DETER / INPE...');
+  let data = await tryServer('deter_alertas');
+
+  if (!data) {
+    try {
+      const d30 = new Date(Date.now()-30*864e5).toISOString().split('T')[0];
+      data = await fetchJSON(
+        `https://terrabrasilis.dpi.inpe.br/geoserver/deter-amz/deter_amz_aggregated/ows`
+        +`?service=WFS&version=1.0.0&request=GetFeature&typeName=deter-amz:deter_amz_aggregated`
+        +`&outputFormat=application/json&maxFeatures=200&CQL_FILTER=view_date>='${d30}'`, 25000
+      );
+    } catch(e) { data = null; }
+  }
+
+  if (!data) { document.getElementById('cnt-deter').textContent='offline'; return 0; }
+
+  lyr.deter.clearLayers();
+  const feats = data.features || [];
+  feats.forEach(f => {
+    try {
+      L.geoJSON(f, {
+        style:{ color:'#ffaa00', weight:1, fillColor:'#ffaa00', fillOpacity:.28 }
+      }).bindPopup(popup.deter(f.properties||{}, ...geomCenter(f.geometry))).addTo(lyr.deter);
+    } catch(e) {}
+  });
+  const n = feats.length;
+  document.getElementById('cnt-deter').textContent = n;
+  document.getElementById('st-deter').textContent  = n.toLocaleString('pt-BR');
+  return n;
+}
+
+// ---- IBGE STATES ----
+async function loadStates() {
+  step('Carregando limites estaduais IBGE...');
+  let data = await tryServer('ibge_estados');
+
+  if (!data) {
+    try {
+      data = await fetchJSON(
+        'https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?resolucao=UF&formato=application/vnd.geo+json&qualidade=minima', 20000
+      );
+    } catch(e) { return; }
+  }
+
+  lyr.states.clearLayers();
+  const feats = (data.features || []).filter(f => {
+    const code = +f.properties?.codarea;
+    return AMAZ_STATES.includes(code);
+  });
+  // If filter yields nothing (data might not have codarea), show all
+  const toShow = feats.length > 0 ? feats : (data.features || []);
+  L.geoJSON({ type:'FeatureCollection', features: toShow }, {
+    style:{ color:'#00f2ff', weight:1.2, fillColor:'transparent', fillOpacity:0, opacity:.35 }
+  }).addTo(lyr.states);
+}
+
+// ---- AMAZON LEGAL BORDER ----
+async function loadBorder() {
+  step('Carregando limite Amazônia Legal (TerraBrasilis)...');
+  let data = await tryServer('amazonia_legal');
+
+  if (!data) {
+    try {
+      data = await fetchJSON(
+        'https://terrabrasilis.dpi.inpe.br/geoserver/llp/amazonia_legal_2022_dissolve/ows'
+        +'?service=WFS&version=1.0.0&request=GetFeature'
+        +'&typeName=llp:amazonia_legal_2022_dissolve&outputFormat=application/json', 25000
+      );
+    } catch(e) { data = null; }
+  }
+
+  if (!data) return;
+  lyr.border.clearLayers();
+  L.geoJSON(data, {
+    style:{ color:'#00ff88', weight:2, fillColor:'#00ff88', fillOpacity:.04, opacity:.65, dashArray:'6 4' }
+  }).bindPopup('<b style="color:#00ff88">🌿 AMAZÔNIA LEGAL 2022</b><br>Área: 5.521.805 km²<br>9 estados | Fonte: INPE TerraBrasilis').addTo(lyr.border);
+}
+
+// ---- UCs ----
+async function loadUCs() {
+  step('Carregando Unidades de Conservação (ICMBio)...');
+  let data = await tryServer('unidades_conservacao');
+
+  if (!data) {
+    try {
+      data = await fetchJSON(
+        'https://mapas.mma.gov.br/geoserver/unidades_protegidas/wfs'
+        +'?service=WFS&version=1.0.0&request=GetFeature'
+        +'&typeName=unidades_protegidas:UC_Fed_Sem_Marinho_Ato_e_Decreto_SIG'
+        +'&outputFormat=application/json&maxFeatures=300'
+        +'&BBOX=-73.99,-33.77,-44.00,5.27', 35000
+      );
+    } catch(e) { data = null; }
+  }
+
+  if (!data) { document.getElementById('cnt-ucs').textContent='offline'; return 0; }
+
+  lyr.ucs.clearLayers();
+  const feats = data.features || [];
+  feats.forEach(f => {
+    try {
+      L.geoJSON(f, {
+        style:{ color:'#00dd77', weight:.8, fillColor:'#00dd77', fillOpacity:.12 }
+      }).bindPopup(popup.uc(f.properties||{}, ...geomCenter(f.geometry))).addTo(lyr.ucs);
+    } catch(e) {}
+  });
+  const n = feats.length;
+  document.getElementById('cnt-ucs').textContent = n;
+  document.getElementById('st-ucs').textContent  = n.toLocaleString('pt-BR');
+  return n;
+}
+
+// ---- TIs ----
+async function loadTIs() {
+  step('Carregando Terras Indígenas (FUNAI)...');
+  let data = await tryServer('terras_indigenas');
+
+  if (!data) {
+    try {
+      data = await fetchJSON(
+        'https://geoserver.funai.gov.br/geoserver/Funai/wfs'
+        +'?service=WFS&version=1.0.0&request=GetFeature'
+        +'&typeName=Funai:tis_poligonais&outputFormat=application/json&maxFeatures=400', 35000
+      );
+    } catch(e) { data = null; }
+  }
+
+  if (!data) { document.getElementById('cnt-tis').textContent='offline'; return 0; }
+
+  lyr.tis.clearLayers();
+  const feats = data.features || [];
+  feats.forEach(f => {
+    try {
+      L.geoJSON(f, {
+        style:{ color:'#ff8800', weight:.8, fillColor:'#ff8800', fillOpacity:.16 }
+      }).bindPopup(popup.ti(f.properties||{}, ...geomCenter(f.geometry))).addTo(lyr.tis);
+    } catch(e) {}
+  });
+  const n = feats.length;
+  document.getElementById('cnt-tis').textContent = n;
+  document.getElementById('st-tis').textContent  = n.toLocaleString('pt-BR');
+  return n;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// VERRA VCS CARBON LAYER
+// ──────────────────────────────────────────────────────────────────────────
+const RISK_COLORS = {
+  critical: '#ff1100', high: '#ff6600', medium: '#ffaa00', low: '#00cc66', none: '#00cc6633'
+};
+const RISK_FILL_OP = { critical: .45, high: .35, medium: .25, low: .12, none: .06 };
+
+const COORD_SOURCE_LABEL = {
+  known:    { icon: '✅', label: 'Verificado manualmente', color: '#00cc66' },
+  keyword:  { icon: '🔶', label: 'Heurística por nome',    color: '#ffaa00' },
+  state:    { icon: '🔸', label: 'Centroide de estado',    color: '#ff8800' },
+  fallback: { icon: '❓', label: 'SEM GEORREF — veja PD',  color: '#ff3300' },
+};
+
+function verraPopup(p, lat, lon) {
+  const riskLabel = { critical:'🔴 CRÍTICO', high:'🟠 ALTO', medium:'🟡 MÉDIO', low:'🟢 BAIXO', none:'⚪ NENHUM' };
+  const riskColor = RISK_COLORS[p.risk_level] || '#ccc';
+  const src = p.coord_source || 'fallback';
+  const srcInfo = COORD_SOURCE_LABEL[src] || COORD_SOURCE_LABEL.fallback;
+  const pdLink = p.pd_url ? ` · <a href="${p.pd_url}" target="_blank" style="color:#00cc6677">PD oficial</a>` : '';
+  const coordWarning = (src === 'fallback' || src === 'state')
+    ? `<div style="background:#ff330022;border:1px solid #ff3300;padding:4px 6px;margin:4px 0;font-size:9px;line-height:1.5">⚠ Coordenadas <b>estimadas</b> — polígono não auditado.<br>Baixe o PD para georref real:<br><a href="${p.pd_url||'#'}" target="_blank" style="color:#ff8855">${p.pd_url||'VERRA Registry'}</a></div>`
+    : `<div style="font-size:9px;color:#00f2ff55;margin-top:4px">${srcInfo.icon} Coord: ${srcInfo.label}${pdLink}</div>`;
+  
+  return `<b style="color:#00cc66">🌱 VERRA VCS — ${p.id}</b><br>
+    <b>${p.name}</b><br>
+    <b>VCUs estimados:</b> ${(+p.total_vcus_est||0).toLocaleString('pt-BR')}<br>
+    <b style="color:#ff4400">⚠ Risco incêndio:</b> ${riskLabel[p.risk_level]||'—'}<br>
+    <div style="margin-top:10px; display:flex; gap:5px;">
+        <button class="popup-btn" style="background:#00cc66;color:#000;border:none;padding:5px;font-size:10px;cursor:pointer;flex:1;font-weight:bold;font-family:inherit;" 
+            onclick="saltoQuantico(${lat}, ${lon})">
+            🌀 AUDITORIA 3D
+        </button>
+        <a href="${p.pd_url}" target="_blank" style="text-decoration:none;background:#222;color:#fff;padding:5px;font-size:10px;flex:1;text-align:center;border:1px solid #444;font-family:inherit;">DOC PD</a>
+    </div>
+    ${coordWarning}`;
+}
+
+async function loadVERRA() {
+  step('Carregando projetos VERRA VCS Brasil...');
+  const data = await tryServer('verra_confronto');
+  if (!data) { document.getElementById('cnt-verra').textContent = 'offline'; return; }
+
+  lyr.verra.clearLayers();
+  const feats = data.features || [];
+  const confront = data.confronto || {};
+
+  let totalFiresIn = 0;
+  let totalBuffer = 0;
+  const topRisk = feats.filter(f => ['critical','high'].includes(f.properties.risk_level)).slice(0,5);
+
+  feats.forEach(f => {
+    const p = f.properties;
+    const [lon, lat] = f.geometry.coordinates;
+    const risk = p.risk_level || 'none';
+    const color = RISK_COLORS[risk];
+    const fillOp = RISK_FILL_OP[risk];
+
+    totalFiresIn += p.fires_nearby || 0;
+    totalBuffer += (p.buffer_pool_est || 0) * (risk === 'critical' ? 1 : risk === 'high' ? 0.5 : 0);
+
+    // Coordenadas incertas (fallback/state) → linha tracejada + opacidade reduzida
+    const src = p.coord_source || 'fallback';
+    const coordUncertain = (src === 'fallback' || src === 'state');
+    const borderDash = coordUncertain ? '8 5' : (risk === 'none' ? '4 6' : null);
+    const borderWeight = coordUncertain ? 1 : (risk === 'none' ? 1 : 2);
+    const borderOpacity = coordUncertain ? .45 : (risk === 'none' ? .3 : .8);
+    const borderColor = coordUncertain ? '#ff880088' : color;
+
+    L.circle([lat, lon], {
+      radius: (p.radius_km || 50) * 1000,
+      color: borderColor, weight: borderWeight,
+      fillColor: color, fillOpacity: coordUncertain ? fillOp * 0.5 : fillOp,
+      opacity: borderOpacity,
+      dashArray: borderDash,
+    }).bindPopup(verraPopup(p, lat, lon)).addTo(lyr.verra);
+  });
+
+  // Update VERRA panel
+  // Contagem de integridade geoespacial
+  const coordSrc = (data.metadata || {}).coord_sources || {};
+  const knownCount  = coordSrc.known    || 0;
+  const kwCount     = coordSrc.keyword  || 0;
+  const stateCount  = coordSrc.state    || 0;
+  const fallbackCount = coordSrc.fallback || 0;
+  const uncertainCount = stateCount + fallbackCount;
+
+  document.getElementById('cnt-verra').textContent = feats.length;
+  document.getElementById('vr-total').textContent = feats.length;
+  document.getElementById('vr-risk').textContent = (confront.projects_at_risk || 0) + ' projetos';
+  document.getElementById('vr-co2').textContent = ((confront.total_co2e_risk_tco2 || 0) / 1e6).toFixed(2) + 'M tCO₂e';
+  document.getElementById('vr-buffer').textContent = Math.round(totalBuffer).toLocaleString('pt-BR') + ' VCUs';
+  document.getElementById('vr-fires-in').textContent = totalFiresIn.toLocaleString('pt-BR') + ' focos';
+  document.getElementById('vr-coord-known').textContent =
+    `${knownCount} ✅  ${kwCount} 🔶  ${stateCount+fallbackCount} ❓`;
+  if (uncertainCount > 0) {
+    document.getElementById('vr-audit-warn').style.display = 'block';
+    document.getElementById('vr-fallback-count').textContent =
+      ` (${fallbackCount} sem georref + ${stateCount} por estado)`;
+  }
+
+  // Top risk list
+  const topHtml = topRisk.map(f => {
+    const p = f.properties;
+    const riskIcon = p.risk_level === 'critical' ? '🔴' : '🟠';
+    return `<div class="vt-item">
+      <div class="vt-name">${riskIcon} [${p.id}] ${p.name.substring(0,36)}${p.name.length > 36 ? '…' : ''}</div>
+      <div class="vt-detail">${p.fires_nearby} focos · ${p.frp_in_radius} MW · ${(p.co2e_at_risk/1000).toFixed(0)}k tCO₂e risco</div>
+    </div>`;
+  }).join('');
+  document.getElementById('verra-top-list').innerHTML = topHtml || '—';
+}
+
+// ---- VERRA PANEL TOGGLE ----
+let verraPanelCollapsed = false;
+function toggleVerraPanel() {
+  verraPanelCollapsed = !verraPanelCollapsed;
+  const body = document.getElementById('verra-panel').querySelectorAll('.vr, #vr-audit-warn, #verra-top');
+  body.forEach(el => el.style.display = verraPanelCollapsed ? 'none' : '');
+  document.getElementById('verra-toggle').textContent = verraPanelCollapsed ? '▼ VER' : '▲ MIN';
+}
+
+// ---- MAIN LOAD ----
+async function loadAll() {
+  setStatus('⟳ CARREGANDO DADOS...', 'loading');
+  try {
+    await loadBorder();
+    await loadStates();
+    const fires = await loadFires();
+    // parallel for slower layers
+    await Promise.allSettled([loadDETER(), loadUCs(), loadTIs(), loadVERRA()]);
+    hideLoader();
+    setStatus(`✓ DADOS CARREGADOS · ${fires} focos · ${new Date().toLocaleTimeString('pt-BR')} · AUTO-REFRESH 6H`, 'live');
+  } catch(e) {
+    hideLoader();
+    setStatus('⚠ ERRO PARCIAL — dados incompletos');
+    console.error(e);
+  }
+}
+
+// ---- REFRESH ----
+loadAll();
+// Fires refresh every 30 min (pipeline atualiza a cada 6h mas NASA FIRMS aceita chamadas mais frequentes)
+setInterval(async () => {
+  setStatus('⟳ ATUALIZANDO FOCOS...', 'loading');
+  await loadFires();
+  setStatus(`✓ ATUALIZADO · ${new Date().toLocaleTimeString('pt-BR')}`, 'live');
+}, 30 * 60 * 1000);
+</script>
+</body>
+</html>

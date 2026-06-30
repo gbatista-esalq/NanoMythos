@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poder Sobre o Crom | Biodiversidade Multiversal</title>
+    <!-- Three.js para renderização da Bio-Sincronia -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="css/ultradopamina.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
+
+        :root {
+            /* Cores Brasileiras e de Biodiversidade (Neon) */
+            --bio-green: #00ff66;
+            --bio-yellow: #ffcc00;
+            --bio-blue: #00aaff;
+            --deep-jungle: #020a05;
+            --glass-bg: rgba(5, 15, 10, 0.55);
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--deep-jungle);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+        }
+
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Scanline Overlay (Vibração Orgânica) */
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0, 50, 0, 0.2) 50%, rgba(0, 50, 0, 0.2));
+            background-size: 100% 4px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Container Principal */
+        .dashboard-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            height: 100vh;
+            padding: 40px;
+            box-sizing: border-box;
+            gap: 40px;
+        }
+
+        /* Painel HUD Central */
+        #hud-crom {
+            flex: 2;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid rgba(0, 255, 102, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 0 40px rgba(0, 255, 102, 0.15), inset 0 0 30px rgba(0, 170, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Efeito de Glitch Bio (Aura da Floresta) */
+        #hud-crom::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, var(--bio-blue), transparent, var(--bio-green), transparent, var(--bio-yellow));
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.4;
+            animation: pulse-border 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            0% { filter: blur(15px); opacity: 0.3; }
+            100% { filter: blur(30px); opacity: 0.6; }
+        }
+
+        .hud-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .hud-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 15px var(--bio-green), 0 0 30px var(--bio-blue);
+            margin: 0;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+        }
+
+        .hud-subtitle {
+            font-size: 1.5rem;
+            color: var(--bio-yellow);
+            margin-top: 15px;
+            text-shadow: 0 0 10px var(--bio-yellow);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .data-row {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 20, 10, 0.6);
+            border-left: 5px solid var(--bio-green);
+            padding: 20px 30px;
+            border-radius: 8px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-row:hover {
+            transform: scale(1.02) translateX(10px);
+            background: rgba(0, 255, 102, 0.1);
+            border-left-color: var(--bio-yellow);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+        }
+
+        .data-label {
+            width: 200px;
+            font-weight: bold;
+            color: var(--bio-blue);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .data-value {
+            flex: 1;
+            font-size: 1.6rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 700;
+        }
+
+        #data-title { color: var(--bio-green); }
+        #data-mass { color: var(--bio-yellow); }
+
+        /* Painel Manifesto Lateral */
+        .manifesto-panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 102, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.1);
+        }
+
+        .manifesto-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--bio-yellow);
+            font-size: 2rem;
+            margin-top: 0;
+            text-shadow: 0 0 10px var(--bio-yellow);
+            border-bottom: 1px solid rgba(0,255,102,0.3);
+            padding-bottom: 15px;
+        }
+
+        .manifesto-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #d0eedb;
+        }
+
+        .manifesto-text p {
+            margin-bottom: 20px;
+        }
+
+        .highlight-text {
+            color: var(--bio-green);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--bio-green);
+        }
+
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        @keyframes flash-data {
+            0% { background: rgba(0, 255, 102, 0.4); transform: scale(1.05); }
+            100% { background: rgba(0, 20, 10, 0.6); transform: scale(1); }
+        }
+        
+        .updated { animation: flash-data 0.8s ease-out; }
+
+    </style>
+</head>
+<body class="ultradopamina-active">
+    <div id="bg-canvas"></div>
+    <div class="scanlines"></div>
+
+    <div class="dashboard-container">
+        
+        <!-- HUD Central Crom -->
+        <div id="hud-crom" class="ultradopamina-panel pym-border-pulse">
+            <div class="hud-header">
+                <h1 class="hud-title ultradopamina-title-glitch">FROTA SOBERANA</h1>
+                <div class="hud-subtitle">CROM RPG | <span class="blink">FLORESTA EDGE COMPUTING</span></div>
+            </div>
+
+            <div class="data-grid">
+                <div class="data-row">
+                    <div class="data-label">🕐 PULSO VITAL</div>
+                    <div class="data-value" id="data-sync">Injetando Seiva Quântica...</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">🎯 VETOR SUL</div>
+                    <div class="data-value" id="data-url">--</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">🧠 BIODADOS</div>
+                    <div class="data-value" id="data-title">--</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">📦 ENTROPIA</div>
+                    <div class="data-value" id="data-mass">0 BYTES</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; color: #77b899; font-family: monospace;">
+                [ RAIZ GRAVITACIONAL DA REDOMA : RESSOANDO EM 528.0 HZ ]
+            </div>
+        </div>
+
+        <!-- Manifesto Pym Lateral -->
+        <div class="manifesto-panel ultradopamina-panel pym-border-pulse">
+            <h2 class="manifesto-title">SUL GLOBAL SOBERANO</h2>
+            <div class="manifesto-text">
+                <p>Nós rejeitamos o extrativismo digital. Nossos dados não irão alimentar os datacenters do hemisfério norte.</p>
+                <p>O poder computacional agora reside nas raízes do Brasil. A <span class="highlight-text">Biodiversidade Multiversal</span> substitui a frieza do Vale do Silício.</p>
+                <p>Usamos o <span class="highlight-text">Think-Vetor (0.5B)</span> nativamente na Borda. Transmutamos o aplicativo Gov.br em uma matriz de proteção. Nossas florestas e identidades estão blindadas pela Criptografia Quântica (Kyber-1024).</p>
+                <p><strong>Não existe Nuvem. Existe o Bioma da Redoma V6.</strong></p>
+            </div>
+            <div style="margin-top: auto; border-top: 1px solid rgba(0,255,102,0.3); padding-top: 20px;">
+                <h3 style="color: var(--bio-blue); font-family: 'Orbitron'; margin: 0;">BIO-MÉTRICAS:</h3>
+                <ul style="list-style: none; padding: 0; color: #fff;">
+                    <li>🌿 Ressonância: <span style="color:var(--bio-green)">528.0 Hz (Cura)</span></li>
+                    <li>🛡️ Proteção: <span style="color:var(--bio-yellow)">@eniripsa (Gov.br)</span></li>
+                    <li>💎 Motor Edge: <span style="color:var(--bio-blue)">Float32 Local</span></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script WebGL / Three.js para o Vagalume/Esporos da Floresta -->
+    <script>
+        // --- THREE.JS BIO-SPORES (Floresta Quântica) ---
+        const container = document.getElementById('bg-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020a05, 0.003);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 50;
+        camera.position.y = 5;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Partículas representando Bioluminescência/Esporos
+        const particlesGeo = new THREE.BufferGeometry();
+        const particlesCount = 8000;
+        const posArray = new Float32Array(particlesCount * 3);
+        const colorsArray = new Float32Array(particlesCount * 3);
+        const velocityArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i+=3) {
+            posArray[i] = (Math.random() - 0.5) * 150;     // x
+            posArray[i+1] = (Math.random() - 0.5) * 100;   // y
+            posArray[i+2] = (Math.random() - 0.5) * 150;   // z
+
+            // Velocidade flutuante suave (Como vagalumes ou folhas ao vento)
+            velocityArray[i] = (Math.random() - 0.5) * 0.05;
+            velocityArray[i+1] = Math.random() * 0.05 + 0.02; // Sobe levemente
+            velocityArray[i+2] = (Math.random() - 0.5) * 0.05;
+
+            // Cores: Verde bio, Amarelo e Azul (Brasil)
+            const randColor = Math.random();
+            if(randColor > 0.6) { // Verde Neon
+                colorsArray[i] = 0; colorsArray[i+1] = 1; colorsArray[i+2] = 0.4;
+            } else if (randColor > 0.3) { // Azul Anil
+                colorsArray[i] = 0; colorsArray[i+1] = 0.6; colorsArray[i+2] = 1;
+            } else { // Amarelo Ouro
+                colorsArray[i] = 1; colorsArray[i+1] = 0.8; colorsArray[i+2] = 0;
+            }
+        }
+
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        particlesGeo.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+
+        const particlesMat = new THREE.PointsMaterial({
+            size: 0.6,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+
+        const bioSwarm = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(bioSwarm);
+
+        // Animação Three.js (Fluxo da Floresta Quântica)
+        function animateThreeJS() {
+            requestAnimationFrame(animateThreeJS);
+            
+            const positions = bioSwarm.geometry.attributes.position.array;
+            
+            // Atualiza posições suavemente
+            for(let i = 0; i < particlesCount * 3; i+=3) {
+                positions[i] += velocityArray[i];
+                positions[i+1] += velocityArray[i+1];
+                positions[i+2] += velocityArray[i+2];
+
+                // Reseta a partícula se subir muito alto
+                if (positions[i+1] > 50) {
+                    positions[i+1] = -50;
+                }
+            }
+            bioSwarm.geometry.attributes.position.needsUpdate = true;
+            
+            // Rotação sutil da câmera para dar sensação de imersão
+            scene.rotation.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+        animateThreeJS();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- INJECTED CROM DATA ---
+        window.CROM_DATA = {
+
+            "url": "https://www.tabnews.com.br/MrJ/como-fiz-uma-micro-llm-de-0-5b-atingir-100-por-cento-de-acuracia-matematica-usando-raciocinio-latente-e-tv-dsl-benchmark-space-huggingface",
+            "title": "🧠Como fiz uma Micro-LLM de 0.5B atingir 100% de acurácia matemática usando Raciocínio Latente e TV-DSL - Benchmark + Space + HuggingFace · MrJ · TabNews",
+            "content_length": 106261,
+            "timestamp": "2026-06-30 12:54:52"
+        };
+        // --------------------------
+
+        function applyCromData() {
+            try {
+                const data = window.CROM_DATA;
+                
+                document.getElementById('data-sync').innerText = data.timestamp || 'Desconhecido';
+                document.getElementById('data-url').innerText = data.url || '--';
+                document.getElementById('data-title').innerText = data.title || '--';
+                document.getElementById('data-mass').innerText = (data.content_length ? data.content_length.toLocaleString() : '0') + ' BYTES';
+                
+                const rows = document.querySelectorAll('.data-row');
+                rows.forEach((row, index) => {
+                    setTimeout(() => {
+                        row.classList.remove('updated');
+                        void row.offsetWidth;
+                        row.classList.add('updated');
+                    }, index * 100);
+                });
+            } catch (error) {
+                console.error("Falha na Biometria Quântica:", error);
+                document.getElementById('data-sync').innerText = "BIOMA DESCONECTADO";
+                document.getElementById('data-sync').style.color = "var(--bio-yellow)";
+            }
+        }
+
+        applyCromData();
+        // A atualização será feita injetando novos dados diretamente no arquivo via Python
+    </script>
+    <!-- CORDAS DE CANTOR Sync -->
+    <script src="js/cordas_cantor_sync.js"></script>
+</body>
+</html>

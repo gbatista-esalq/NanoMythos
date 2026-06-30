@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moondo Biotech x Synapse Hub | Strategic Pitch Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --blue-600: #2563eb;
+            --blue-500: #3b82f6;
+            --emerald-500: #10b981;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--slate-900);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10% 15%;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(20px);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        h1 { font-size: 56px; font-weight: 700; margin-bottom: 24px; letter-spacing: -2px; }
+        h2 { font-size: 32px; color: var(--blue-500); margin-bottom: 30px; font-weight: 600; }
+        p { font-size: 20px; line-height: 1.6; color: var(--subtext); max-width: 800px; }
+
+        .tag {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--blue-500);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 50px;
+            width: 100%;
+        }
+
+        .feature {
+            background: var(--slate-800);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+
+        .feature h3 { font-size: 20px; margin-bottom: 12px; color: #fff; }
+        .feature p { font-size: 16px; }
+
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background 0.3s;
+        }
+
+        button:hover { background: var(--blue-600); }
+
+        .progress {
+            position: fixed;
+            top: 0; left: 0; height: 4px;
+            background: var(--blue-600);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .footer-info {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            font-size: 12px;
+            color: var(--subtext);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Diagrams */
+        .diagram {
+            width: 100%;
+            height: 200px;
+            margin-top: 40px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            color: var(--emerald-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="progress" id="progress"></div>
+    <div class="presentation">
+
+        <!-- Slide 1: Intro -->
+        <div class="slide active" id="slide-1">
+            <span class="tag">Parceria Estratégica</span>
+            <h1>Soberania Computacional para Biotecnologia</h1>
+            <p>Uma infraestrutura autônoma desenhada para a Moondo Biotech e a visão científica de Aline Bruna da Silva.</p>
+        </div>
+
+        <!-- Slide 2: O Desafio -->
+        <div class="slide" id="slide-2">
+            <h2>O Gargalo da Inovação</h2>
+            <p>A dependência de nuvens públicas expõe o IP (Segredo Industrial) e gera latência crítica em simulações de agricultura celular. Moondo exige controle total.</p>
+            <div class="grid">
+                <div class="feature"><h3>Vulnerabilidade</h3><p>IP exposto em servidores terceiros.</p></div>
+                <div class="feature"><h3>Latência</h3><p>Gargalo no processamento de telemetria.</p></div>
+                <div class="feature"><h3>Custo</h3><p>Escalabilidade ineficiente em cloud tradicional.</p></div>
+            </div>
+        </div>
+
+        <!-- Slide 3: A Solução -->
+        <div class="slide" id="slide-3">
+            <h2>Synapse Hub: A Redoma</h2>
+            <p>Uma infraestrutura de <em>Edge Computing</em> privada, air-gapped e otimizada por algoritmos de Pym-Scaling.</p>
+            <div class="grid">
+                <div class="feature"><h3>Privacidade Total</h3><p>Hardware local auditável e inviolável.</p></div>
+                <div class="feature"><h3>Eficiência Pym</h3><p>Compressão ZSTD-22 Diamond para telemetria.</p></div>
+                <div class="feature"><h3>Triarquia AI</h3><p>Claude + Gemini rodando localmente no IP da Moondo.</p></div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Tecnologia Moondo -->
+        <div class="slide" id="slide-4">
+            <h2>Sincronia Eletro-Gravitacional</h2>
+            <p>Explicação técnica para Aline: Utilizamos campos de dados (Modo Pym) modulados por algoritmos gravitacionais para orientar a "eletrofiação lógica" dos seus dados de biorreatores.</p>
+            <div class="diagram">
+                [ CAMPO ELÉTRICO ] ----( ε: SUAVIZAÇÃO )----> [ FIBRA DE DADOS SOBERANA ]
+            </div>
+        </div>
+
+        <!-- Slide 5: Impacto -->
+        <div class="slide" id="slide-5">
+            <h2>Impacto para Moondo</h2>
+            <p>Aceleração direta em P&D para carne cultivada e couro sustentável. O sistema aprende com os dados do laboratório e otimiza os scaffolds em tempo real.</p>
+            <div class="grid">
+                <div class="feature"><h3>90%</h3><p>Redução em latência de decisão.</p></div>
+                <div class="feature"><h3>100%</h3><p>Soberania sobre o IP biotecnológico.</p></div>
+                <div class="feature"><h3>24/7</h3><p>Monitoramento autônomo e resiliente.</p></div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Conclusão -->
+        <div class="slide" id="slide-6">
+            <h1>O Futuro é Soberano.</h1>
+            <p>Aline, estamos prontos para selar a infraestrutura e começar a forja dos dados bióticos da Moondo.</p>
+            <h2 style="margin-top: 40px;">Vamos evoluir juntos?</h2>
+        </div>
+
+    </div>
+
+    <div class="footer-info">Synapse Hub x Moondo Biotech // Confidential</div>
+
+    <div class="controls">
+        <button onclick="prev()">←</button>
+        <button onclick="next()">→</button>
+    </div>
+
+    <script>
+        let current = 1;
+        const total = 6;
+
+        function update() {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById('slide-' + current).classList.add('active');
+            document.getElementById('progress').style.width = (current / total * 100) + '%';
+        }
+
+        function next() {
+            if (current < total) current++;
+            update();
+        }
+
+        function prev() {
+            if (current > 1) current--;
+            update();
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+    </script>
+</body>
+</html>

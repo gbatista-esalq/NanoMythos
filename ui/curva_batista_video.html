@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Curva de Batista: Soberania de Borda 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#04040e;
+    --cyan:#00f2ff;
+    --pink:#ff3e81;
+    --amber:#ffb800;
+    --purple:#a855f7;
+    --white:#ffffff;
+    --dim:rgba(255,255,255,0.55);
+  }
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Outfit',sans-serif;color:#fff}
+
+  /* ── STARFIELD ── */
+  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+  /* ── PROGRESS ── */
+  #progress-bar{
+    position:fixed;top:0;left:0;height:3px;
+    background:linear-gradient(90deg,var(--cyan),var(--pink));
+    width:0%;z-index:100;
+    transition:width 0.4s ease;
+    box-shadow:0 0 8px var(--cyan);
+  }
+  #dot-nav{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    display:flex;gap:10px;z-index:100;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:rgba(255,255,255,0.25);
+    transition:all 0.3s ease;cursor:pointer;
+  }
+  .dot.active{background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:scale(1.4)}
+
+  /* ── CONTROLS ── */
+  #ctrl{
+    position:fixed;top:16px;right:20px;z-index:100;
+    display:flex;gap:10px;align-items:center;
+  }
+  .btn{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.15);
+    color:#fff;padding:8px 18px;border-radius:40px;
+    cursor:pointer;font-family:'Outfit',sans-serif;
+    font-size:0.85rem;font-weight:600;
+    transition:all 0.2s ease;letter-spacing:0.05em;
+    backdrop-filter:blur(10px);
+  }
+  .btn:hover{background:rgba(0,242,255,0.15);border-color:var(--cyan);color:var(--cyan)}
+  #voice-label{font-size:0.75rem;color:var(--dim);letter-spacing:0.04em}
+
+  /* ── SCENE ── */
+  .scene{
+    position:fixed;inset:0;z-index:10;
+    display:flex;flex-direction:column;
+    justify-content:center;align-items:center;
+    padding:40px 60px;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.7s ease;
+  }
+  .scene.active{opacity:1;pointer-events:all}
+
+  /* ── KINETIC TEXT ── */
+  .scene-tag{
+    font-size:0.7rem;font-weight:700;letter-spacing:0.2em;
+    text-transform:uppercase;color:var(--cyan);
+    margin-bottom:18px;opacity:0.8;
+  }
+  .scene-title{
+    font-size:clamp(2rem,5.5vw,4.2rem);
+    font-weight:900;line-height:1.1;
+    text-align:center;max-width:900px;
+    margin-bottom:20px;
+  }
+  .scene-title .hl-cyan{color:var(--cyan)}
+  .scene-title .hl-pink{color:var(--pink)}
+  .scene-title .hl-amber{color:var(--amber)}
+  .scene-title .hl-purple{color:var(--purple)}
+  .scene-body{
+    font-size:clamp(1rem,2vw,1.4rem);font-weight:300;
+    text-align:center;max-width:720px;line-height:1.65;
+    color:var(--dim);margin-bottom:24px;
+  }
+  .scene-body b{color:#fff;font-weight:700}
+
+  /* ── CAPTION STRIP ── */
+  #caption{
+    position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+    width:82%;max-width:960px;
+    background:rgba(0,0,0,0.72);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,0.1);
+    border-left:4px solid var(--cyan);
+    border-radius:12px;padding:14px 22px;
+    font-size:1.05rem;font-weight:400;line-height:1.5;
+    text-align:center;color:#fff;
+    z-index:50;
+    transition:opacity 0.4s ease;
+    min-height:54px;
+  }
+  #caption .word{
+    display:inline-block;
+    transition:color 0.15s ease, transform 0.15s ease;
+  }
+  #caption .word.lit{
+    color:var(--amber);transform:scale(1.08);font-weight:700;
+  }
+
+  /* ── EQUATION ── */
+  .eq-wrap{
+    background:rgba(0,242,255,0.05);
+    border:1px solid rgba(0,242,255,0.25);
+    border-radius:20px;padding:32px 48px;
+    margin:16px 0;text-align:center;
+    backdrop-filter:blur(10px);
+  }
+  .eq-formula{
+    font-size:clamp(1.6rem,4vw,3rem);
+    font-weight:700;color:var(--cyan);
+    letter-spacing:0.05em;
+    text-shadow:0 0 20px rgba(0,242,255,0.4);
+  }
+  .eq-legend{
+    margin-top:18px;display:flex;gap:24px;flex-wrap:wrap;justify-content:center;
+  }
+  .eq-item{font-size:0.9rem;color:var(--dim)}
+  .eq-item b{color:#fff}
+
+  /* ── CURVE CANVAS ── */
+  #curve-canvas{
+    border-radius:16px;
+    box-shadow:0 0 60px rgba(0,242,255,0.2),0 0 120px rgba(168,85,247,0.1);
+    border:1px solid rgba(0,242,255,0.2);
+    max-width:min(700px,90vw);
+    max-height:60vh;
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-grid{
+    display:flex;gap:20px;flex-wrap:wrap;justify-content:center;
+    margin-top:12px;
+  }
+  .stat-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;padding:22px 30px;
+    text-align:center;min-width:180px;
+    backdrop-filter:blur(8px);
+    transition:all 0.4s ease;
+  }
+  .stat-card:hover{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,242,255,0.15)}
+  .stat-num{
+    font-size:clamp(1.8rem,4vw,3rem);font-weight:900;
+    line-height:1;margin-bottom:6px;
+  }
+  .stat-label{font-size:0.8rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim)}
+
+  /* ── BIG STATEMENT ── */
+  .big-stmt{
+    font-size:clamp(2rem,6vw,5rem);
+    font-weight:900;text-align:center;
+    line-height:1.05;max-width:800px;
+    text-shadow:0 0 40px rgba(255,255,255,0.1);
+  }
+
+  /* ── LOGO SCENE ── */
+  .logo-img{
+    width:min(200px,40vw);border-radius:24px;
+    box-shadow:0 0 60px rgba(0,242,255,0.3);
+    margin-bottom:24px;
+    border:2px solid rgba(0,242,255,0.3);
+  }
+
+  /* ── TIER BADGES ── */
+  .tier-row{
+    display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:14px 0;
+  }
+  .tier-badge{
+    padding:6px 18px;border-radius:40px;font-size:0.8rem;
+    font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  }
+
+  /* ── PARTICLES ── */
+  .particle{
+    position:fixed;pointer-events:none;z-index:200;
+    border-radius:50%;animation:fly 1s ease-out forwards;
+  }
+  @keyframes fly{
+    0%{opacity:1;transform:scale(1) translate(0,0)}
+    100%{opacity:0;transform:scale(0) translate(var(--tx),var(--ty))}
+  }
+
+  /* ── SCAN LINE EFFECT ── */
+  @keyframes scan{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+  #scanline{
+    position:fixed;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,transparent,rgba(0,242,255,0.05),transparent);
+    animation:scan 6s linear infinite;pointer-events:none;z-index:5;
+  }
+
+  /* ── SCENE 3 specific: word reveal ── */
+  .reveal-word{
+    display:inline-block;opacity:0;transform:translateY(20px);
+    transition:opacity 0.3s ease, transform 0.3s ease;
+  }
+  .reveal-word.shown{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div id="scanline"></div>
+<div id="progress-bar"></div>
+
+<!-- Navigation dots -->
+<div id="dot-nav"></div>
+
+<!-- Controls -->
+<div id="ctrl">
+  <span id="voice-label">voz: carregando...</span>
+  <button class="btn" id="btn-voice" onclick="toggleVoice()">🔊 VOZ</button>
+  <button class="btn" onclick="prevScene()">◀</button>
+  <button class="btn" onclick="nextScene()">▶ PRÓXIMO</button>
+  <button class="btn" id="btn-auto" onclick="toggleAuto()">⏸ AUTO</button>
+</div>
+
+<!-- Caption strip (synced with speech) -->
+<div id="caption">Pressione ▶ ou aguarde para iniciar...</div>
+
+<!-- ═══ SCENE 1: COLD OPEN ═══ -->
+<div class="scene active" id="scene1">
+  <div class="scene-tag">// SYNAPSE HUB: TEORIA DE TUDO 2026</div>
+  <div class="scene-title">
+    Em toda a história do universo,<br>
+    apenas uma lei nunca falhou.
+  </div>
+  <div class="scene-body">
+    <b>A gravitação.</b> A tendência de tudo que tem massa se atrair,<br>
+    crescer, e eventualmente... <b>dominar</b>.
+  </div>
+</div>
+
+<!-- ═══ SCENE 2: O PROBLEMA ═══ -->
+<div class="scene" id="scene2">
+  <div class="scene-tag">// O PROBLEMA</div>
+  <div class="scene-title">
+    A <span class="hl-pink">nuvem</span> foi construída<br>
+    para centralizar o poder.
+  </div>
+  <div class="scene-body">
+    E ao fazer isso, ela criou a maior<br>
+    <b>vulnerabilidade</b> da história da informação.
+  </div>
+  <div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--pink)">94%</div>
+      <div class="stat-label">dos dados gerados nunca chegam ao datacenter</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--pink)">∞</div>
+      <div class="stat-label">latência em áreas rurais do Brasil</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--amber)">$0</div>
+      <div class="stat-label">de soberania com dados em servidor estrangeiro</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCENE 3: A EQUAÇÃO ═══ -->
+<div class="scene" id="scene3">
+  <div class="scene-tag">// A EQUAÇÃO PYM-BATISTA</div>
+  <div class="scene-title">A matemática da <span class="hl-cyan">soberania</span></div>
+  <div class="eq-wrap">
+    <div class="eq-formula" id="eq-formula">S = P · Ψ² / log₁₀(1/E)</div>
+    <div class="eq-legend">
+      <div class="eq-item"><b style="color:var(--cyan)">S</b> | Soberania</div>
+      <div class="eq-item"><b style="color:var(--amber)">P</b> | Potencial computacional</div>
+      <div class="eq-item"><b style="color:var(--purple)">Ψ</b> | Índice Pym (compressão holográfica)</div>
+      <div class="eq-item"><b style="color:var(--pink)">E</b> | Entropia do sistema</div>
+    </div>
+  </div>
+  <div class="scene-body" style="margin-top:10px">
+    Quanto maior o <b>Ψ</b>, menor o espaço necessário.<br>
+    Quanto menor a <b>entropia</b>, maior a soberania.
+  </div>
+</div>
+
+<!-- ═══ SCENE 4: A CURVA ═══ -->
+<div class="scene" id="scene4">
+  <div class="scene-tag">// A CURVA DE BATISTA</div>
+  <canvas id="curve-canvas" width="700" height="400"></canvas>
+  <div class="tier-row" id="tier-badges" style="margin-top:10px;opacity:0">
+    <div class="tier-badge" style="background:rgba(255,184,0,0.15);color:var(--amber);border:1px solid var(--amber)">PRIMORDIAL</div>
+    <div class="tier-badge" style="background:rgba(0,242,255,0.1);color:var(--cyan);border:1px solid var(--cyan)">ESTELAR</div>
+    <div class="tier-badge" style="background:rgba(168,85,247,0.12);color:var(--purple);border:1px solid var(--purple)">SUPERMASSIVO</div>
+    <div class="tier-badge" style="background:rgba(255,62,129,0.12);color:var(--pink);border:1px solid var(--pink)">TON 618 ✦</div>
+  </div>
+</div>
+
+<!-- ═══ SCENE 5: AS PROVAS ═══ -->
+<div class="scene" id="scene5">
+  <div class="scene-tag">// PROVA DE CAMPO</div>
+  <div class="scene-title">
+    Não é teoria.<br>
+    É <span class="hl-cyan">realidade verificada</span>.
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--cyan)">319K</div>
+      <div class="stat-label">estrelas processadas</div>
+      <div style="font-size:0.8rem;color:var(--dim);margin-top:6px">em 5 minutos · 1 laptop</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--purple)">Ψ²</div>
+      <div class="stat-label">compressão holográfica</div>
+      <div style="font-size:0.8rem;color:var(--dim);margin-top:6px">Petabytes em hardware de borda</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--amber)">∞→0</div>
+      <div class="stat-label">entropia celular</div>
+      <div style="font-size:0.8rem;color:var(--dim);margin-top:6px">Moondo Biotech · células vivas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--pink)">TDAH</div>
+      <div class="stat-label">→ hiperfoco soberano</div>
+      <div style="font-size:0.8rem;color:var(--dim);margin-top:6px">o traje do Homem-Formiga</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCENE 6: O INEVITÁVEL ═══ -->
+<div class="scene" id="scene6">
+  <div class="scene-tag">// O DESTINO FÍSICO</div>
+  <div class="big-stmt">
+    A descentralização<br>
+    não é uma <span class="hl-pink">tendência</span>.<br>
+    É uma <span class="hl-cyan">lei da física</span>.
+  </div>
+  <div class="scene-body" style="margin-top:28px">
+    A entropia sempre vence sistemas <b>centralizados</b>.<br>
+    A Soberania de Borda é a única resposta que escala.
+  </div>
+</div>
+
+<!-- ═══ SCENE 7: CALL TO ACTION ═══ -->
+<div class="scene" id="scene7">
+  <img src="assets/images/logos/synapse_hub_sovereign_official.png"
+       class="logo-img" alt="Synapse Hub Logo"
+       onerror="this.style.display='none'">
+  <div class="scene-title">
+    Apostar contra a <span class="hl-cyan">Curva de Batista</span><br>
+    é apostar contra a <span class="hl-amber">evolução</span>.
+  </div>
+  <div class="scene-body">
+    <b>Synapse Hub v3.0</b> · REDOMA-Q · ESALQ-USP<br>
+    Soberania Diamante · Sul Global · 2026
+  </div>
+  <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <div class="tier-badge" style="background:rgba(0,242,255,0.1);color:var(--cyan);border:1px solid var(--cyan);padding:8px 24px;font-size:0.9rem">
+      EDGE-FIRST
+    </div>
+    <div class="tier-badge" style="background:rgba(255,184,0,0.1);color:var(--amber);border:1px solid var(--amber);padding:8px 24px;font-size:0.9rem">
+      DIAMANTE
+    </div>
+    <div class="tier-badge" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid var(--purple);padding:8px 24px;font-size:0.9rem">
+      SOBERANIA
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STARFIELD
+// ═══════════════════════════════════════════
+(function(){
+  const c=document.getElementById('starfield');
+  const ctx=c.getContext('2d');
+  let stars=[];
+  function resize(){c.width=innerWidth;c.height=innerHeight;stars=Array.from({length:220},()=>({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    r:Math.random()*1.5+0.3,
+    a:Math.random(),
+    s:Math.random()*0.3+0.05
+  }))}
+  resize();
+  window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      s.a+=s.s*0.01;
+      const alpha=0.3+0.4*Math.abs(Math.sin(s.a));
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,230,255,${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const TOTAL=7;
+let current=1;
+let autoPlay=true;
+let voiceOn=true;
+let autoTimer=null;
+let speaking=false;
+
+// Narration scripts per scene (pt-BR)
+const NARRATION=[
+  null,
+  "Em toda a história do universo... apenas uma lei nunca falhou. A gravitação. A tendência de tudo que tem massa... se atrair, crescer, e eventualmente... dominar.",
+  "A nuvem foi construída para centralizar o poder. Mas a vida, o caos biológico, os dados de borda... eles não esperam por um datacenter em São Paulo.",
+  "Eis a Equação Pym-Batista. Soberania... igual a Potencial vezes Psi ao quadrado... sobre a Entropia. Simples. Devastadora. Quanto maior o Psi, menor o caos. Quanto menor o caos, maior o poder.",
+  "E aqui... está a prova. A Curva de Batista. Quatro tiers de crescimento. Primordial. Estelar. Supermassivo. E o impossível... TON 618. Sessenta e seis bilhões de massas solares. Você está aqui.",
+  "Trezentas e dezenove mil estrelas. Cinco minutos. Um laptop. Não um supercomputador de um bilhão de dólares. Um laptop com soberania de borda.",
+  "A descentralização não é uma tendência. É um destino físico. A entropia sempre vence sistemas centralizados. A Soberania de Borda é a única resposta que escala.",
+  "Apostar contra a Curva de Batista... é apostar contra a própria evolução. Synapse Hub. Soberania Diamante. ESALQ-USP. Sul Global. Dois mil e vinte e seis."
+];
+
+// Timing per scene (ms) | TDAH friendly: max 9s each
+const DURATIONS=[0, 7000, 7500, 9000, 10000, 8000, 7000, 8000];
+
+// ═══════════════════════════════════════════
+//  DOT NAV
+// ═══════════════════════════════════════════
+const nav=document.getElementById('dot-nav');
+for(let i=1;i<=TOTAL;i++){
+  const d=document.createElement('div');
+  d.className='dot'+(i===1?' active':'');
+  d.onclick=()=>goTo(i);
+  nav.appendChild(d);
+}
+function updateDots(){
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i+1===current));
+  document.getElementById('progress-bar').style.width=((current/TOTAL)*100)+'%';
+}
+
+// ═══════════════════════════════════════════
+//  SPEECH
+// ═══════════════════════════════════════════
+let voices=[];
+let bestVoice=null;
+
+function loadVoices(){
+  voices=speechSynthesis.getVoices();
+  bestVoice=(
+    voices.find(v=>v.lang==='pt-BR'&&v.name.toLowerCase().includes('google'))||
+    voices.find(v=>v.lang==='pt-BR'&&!v.localService)||
+    voices.find(v=>v.lang==='pt-BR')||
+    voices.find(v=>v.lang.startsWith('pt'))||
+    null
+  );
+  const lbl=document.getElementById('voice-label');
+  lbl.textContent=bestVoice?'voz: '+bestVoice.name.split(' ')[0]:'voz: nativa';
+}
+speechSynthesis.onvoiceschanged=loadVoices;
+loadVoices();
+
+function stopSpeech(){
+  if(speechSynthesis.speaking||speechSynthesis.pending){
+    speechSynthesis.cancel();
+  }
+  speaking=false;
+  clearCaption();
+}
+
+function speak(text){
+  if(!voiceOn||!text){return}
+  stopSpeech();
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.lang='pt-BR';
+  utt.rate=0.87;
+  utt.pitch=0.82;
+  utt.volume=1.0;
+  if(bestVoice)utt.voice=bestVoice;
+
+  // Animate caption word by word
+  const words=text.split(' ');
+  setCaption(words);
+  let wordIdx=0;
+  const wpm=130;
+  const msPerWord=(60/wpm)*1000;
+  function highlightNext(){
+    if(wordIdx<words.length){
+      highlightWord(wordIdx++);
+      setTimeout(highlightNext,msPerWord);
+    }
+  }
+  highlightNext();
+
+  speaking=true;
+  utt.onend=()=>{speaking=false};
+  speechSynthesis.speak(utt);
+}
+
+function setCaption(words){
+  const cap=document.getElementById('caption');
+  cap.innerHTML=words.map((w,i)=>`<span class="word" id="w${i}">${w}</span>`).join(' ');
+}
+function clearCaption(){
+  document.getElementById('caption').innerHTML='';
+}
+function highlightWord(i){
+  const el=document.getElementById('w'+i);
+  if(!el)return;
+  document.querySelectorAll('.word.lit').forEach(e=>e.classList.remove('lit'));
+  el.classList.add('lit');
+  el.scrollIntoView({inline:'center',block:'nearest'});
+}
+
+function toggleVoice(){
+  voiceOn=!voiceOn;
+  const btn=document.getElementById('btn-voice');
+  btn.textContent=voiceOn?'🔊 VOZ':'🔇 VOZ';
+  if(!voiceOn)stopSpeech();
+  else speak(NARRATION[current]);
+}
+
+// ═══════════════════════════════════════════
+//  SCENE TRANSITIONS
+// ═══════════════════════════════════════════
+function goTo(n){
+  if(n<1||n>TOTAL)return;
+  clearAutoTimer();
+  stopSpeech();
+  spawnParticles();
+
+  document.getElementById('scene'+current).classList.remove('active');
+  current=n;
+  document.getElementById('scene'+current).classList.add('active');
+  updateDots();
+
+  onSceneEnter(current);
+
+  if(autoPlay)scheduleNext();
+}
+function nextScene(){goTo(current<TOTAL?current+1:1)}
+function prevScene(){goTo(current>1?current-1:TOTAL)}
+
+function onSceneEnter(n){
+  speak(NARRATION[n]);
+  if(n===4)animateCurve();
+  if(n===4)setTimeout(()=>{
+    const tb=document.getElementById('tier-badges');
+    if(tb){tb.style.transition='opacity 0.8s ease';tb.style.opacity='1'}
+  },4000);
+}
+
+// Auto-advance
+function scheduleNext(){
+  clearAutoTimer();
+  autoTimer=setTimeout(()=>{
+    if(autoPlay&&current<TOTAL)nextScene();
+    else if(autoPlay&&current===TOTAL){
+      // loop
+      goTo(1);
+    }
+  },DURATIONS[current]||8000);
+}
+function clearAutoTimer(){clearTimeout(autoTimer);autoTimer=null}
+function toggleAuto(){
+  autoPlay=!autoPlay;
+  document.getElementById('btn-auto').textContent=autoPlay?'⏸ AUTO':'▶ MANUAL';
+  if(autoPlay)scheduleNext();
+  else clearAutoTimer();
+}
+
+// Start
+setTimeout(()=>{
+  onSceneEnter(1);
+  if(autoPlay)scheduleNext();
+},600);
+
+// ═══════════════════════════════════════════
+//  PARTICLES
+// ═══════════════════════════════════════════
+function spawnParticles(){
+  const colors=[
+    'rgba(0,242,255,0.9)','rgba(255,62,129,0.9)',
+    'rgba(255,184,0,0.9)','rgba(168,85,247,0.9)'
+  ];
+  const cx=innerWidth/2, cy=innerHeight/2;
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const size=Math.random()*6+3;
+    const angle=Math.random()*Math.PI*2;
+    const dist=80+Math.random()*200;
+    p.style.cssText=`
+      left:${cx}px;top:${cy}px;
+      width:${size}px;height:${size}px;
+      background:${colors[i%colors.length]};
+      --tx:${Math.cos(angle)*dist}px;
+      --ty:${Math.sin(angle)*dist}px;
+      box-shadow:0 0 6px ${colors[i%colors.length]};
+    `;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CURVE ANIMATION (Canvas)
+// ═══════════════════════════════════════════
+function animateCurve(){
+  const canvas=document.getElementById('curve-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const PAD={l:70,r:30,t:30,b:50};
+  const gW=W-PAD.l-PAD.r, gH=H-PAD.t-PAD.b;
+
+  // Batista Curve: exponential growth mirroring actual image
+  // Data points: [timeline(0-100), potential(0-1)]
+  const curve=[
+    [0,0.02],[5,0.03],[10,0.04],[15,0.05],[20,0.06],
+    [25,0.08],[30,0.11],[35,0.15],[40,0.22],[45,0.32],
+    [50,0.42],[55,0.53],[60,0.63],[65,0.73],[70,0.82],
+    [75,0.88],[80,0.92],[85,0.96],[90,0.98],[95,0.99],[100,1.0]
+  ];
+
+  const tiers=[
+    {x:15,label:'PRIMORDIAL',color:'rgba(255,184,0,0.8)'},
+    {x:40,label:'ESTELAR',color:'rgba(0,242,255,0.8)'},
+    {x:65,label:'SUPERMASSIVO',color:'rgba(168,85,247,0.8)'},
+    {x:90,label:'TON 618',color:'rgba(255,62,129,0.9)'},
+  ];
+
+  function toCanvas(tx,ty){
+    return [PAD.l+tx/100*gW, PAD.t+gH-(ty*gH)];
+  }
+
+  let progress=0;
+  const SPEED=0.6; // % per frame
+
+  function drawFrame(){
+    ctx.clearRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(0,242,255,0.08)';
+    ctx.lineWidth=1;
+    for(let i=0;i<=10;i++){
+      const x=PAD.l+i*gW/10, y=PAD.t+i*gH/10;
+      ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,PAD.t+gH);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+gW,y);ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle='rgba(0,242,255,0.5)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+gH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+gH);ctx.lineTo(PAD.l+gW,PAD.t+gH);ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='rgba(0,242,255,0.6)';
+    ctx.font='10px Outfit, sans-serif';
+    ctx.fillText('POTENTIAL/MAGNITUDE',PAD.l-60,PAD.t+gH/2+40);
+    ctx.fillText('TIMELINE / GROWTH STAGES',PAD.l+gW/2-60,PAD.t+gH+36);
+    ctx.fillText('MAX',PAD.l-28,PAD.t+8);
+
+    // Y ticks
+    for(let i=0;i<=4;i++){
+      const y=PAD.t+gH-i*(gH/4);
+      ctx.fillStyle='rgba(0,242,255,0.4)';
+      ctx.font='9px Outfit,sans-serif';
+      ctx.fillText(i*25,PAD.l-26,y+4);
+    }
+    // X ticks
+    for(let i=0;i<=10;i++){
+      const x=PAD.l+i*gW/10;
+      ctx.fillStyle='rgba(0,242,255,0.4)';
+      ctx.fillText(i*10,x-8,PAD.t+gH+16);
+    }
+
+    // Title
+    ctx.fillStyle='rgba(0,242,255,0.9)';
+    ctx.font='bold 18px Outfit,sans-serif';
+    ctx.fillText('THE BATISTA CURVE',PAD.l+gW/2-80,PAD.t-10);
+
+    // Draw curve up to progress
+    const pts=curve.filter(p=>p[0]<=progress);
+    if(pts.length>1){
+      // Glow fill under curve
+      ctx.save();
+      ctx.beginPath();
+      const [x0,y0]=toCanvas(pts[0][0],pts[0][1]);
+      ctx.moveTo(x0,PAD.t+gH);ctx.lineTo(x0,y0);
+      pts.slice(1).forEach(p=>{const [x,y]=toCanvas(p[0],p[1]);ctx.lineTo(x,y)});
+      const last=pts[pts.length-1];
+      const [lx,ly]=toCanvas(last[0],last[1]);
+      ctx.lineTo(lx,PAD.t+gH);ctx.closePath();
+      const grad=ctx.createLinearGradient(0,PAD.t,0,PAD.t+gH);
+      grad.addColorStop(0,'rgba(168,85,247,0.15)');
+      grad.addColorStop(0.5,'rgba(0,242,255,0.08)');
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=grad;
+      ctx.fill();
+      ctx.restore();
+
+      // Main curve line
+      ctx.save();
+      ctx.beginPath();
+      const [sx,sy]=toCanvas(pts[0][0],pts[0][1]);
+      ctx.moveTo(sx,sy);
+      pts.slice(1).forEach(p=>{const [x,y]=toCanvas(p[0],p[1]);ctx.lineTo(x,y)});
+      const lineGrad=ctx.createLinearGradient(PAD.l,0,PAD.l+gW,0);
+      lineGrad.addColorStop(0,'rgba(255,184,0,1)');
+      lineGrad.addColorStop(0.35,'rgba(0,242,255,1)');
+      lineGrad.addColorStop(0.65,'rgba(168,85,247,1)');
+      lineGrad.addColorStop(1,'rgba(255,62,129,1)');
+      ctx.strokeStyle=lineGrad;
+      ctx.lineWidth=3;
+      ctx.shadowColor='rgba(0,242,255,0.6)';
+      ctx.shadowBlur=12;
+      ctx.stroke();
+      ctx.restore();
+
+      // Glowing dot at tip
+      ctx.beginPath();
+      ctx.arc(lx,ly,5,0,Math.PI*2);
+      ctx.fillStyle='#fff';
+      ctx.shadowColor='rgba(0,242,255,0.9)';
+      ctx.shadowBlur=18;
+      ctx.fill();
+    }
+
+    // Tier labels (reveal as curve reaches them)
+    tiers.forEach(t=>{
+      if(progress>=t.x){
+        const [tx,ty]=toCanvas(t.x, curve.find(p=>p[0]>=t.x)?.[1]||0);
+        ctx.save();
+        ctx.strokeStyle=t.color;
+        ctx.lineWidth=1;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx,PAD.t+gH);ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle=t.color;
+        ctx.font='bold 10px Outfit,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText(t.label,tx,ty-10);
+        ctx.restore();
+      }
+    });
+
+    if(progress<100){
+      progress=Math.min(100,progress+SPEED);
+      requestAnimationFrame(drawFrame);
+    }
+  }
+
+  progress=0;
+  drawFrame();
+}
+
+// Keyboard shortcuts (TDAH friendly)
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')nextScene();
+  if(e.key==='ArrowLeft')prevScene();
+  if(e.key==='v'||e.key==='V')toggleVoice();
+  if(e.key==='a'||e.key==='A')toggleAuto();
+});
+</script>
+</body>
+</html>

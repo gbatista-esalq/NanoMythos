@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>REDOMA DA BIODIVERSIDADE — AMAZÔNIA VIVA</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#000; overflow:hidden; font-family:'Courier New',monospace; }
+
+#title {
+  position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  text-align:center; pointer-events:none; z-index:9999;
+}
+#title h1 { font-size:19px; letter-spacing:4px; color:#00ff66;
+  text-shadow:0 0 20px #00ff66, 0 0 60px #00ff6644;
+  animation:pulse 2s ease-in-out infinite; }
+#title p { font-size:10px; color:#ffd700; letter-spacing:3px; margin-top:3px; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+.corner{position:fixed;width:34px;height:34px;}
+.corner.tl{top:8px;left:8px;border-top:2px solid #00ff66;border-left:2px solid #00ff66;}
+.corner.tr{top:8px;right:8px;border-top:2px solid #00ff66;border-right:2px solid #00ff66;}
+.corner.bl{bottom:8px;left:8px;border-bottom:2px solid #00ff66;border-left:2px solid #00ff66;}
+.corner.br{bottom:8px;right:8px;border-bottom:2px solid #00ff66;border-right:2px solid #00ff66;}
+
+.panel{position:fixed;background:rgba(0,10,4,0.9);border:1px solid #00ff6622;padding:14px;backdrop-filter:blur(5px);z-index:9999;}
+.pt{font-size:9px;letter-spacing:3px;color:#ffd700;border-bottom:1px solid #ffd70022;padding-bottom:5px;margin-bottom:8px;}
+.r{display:flex;justify-content:space-between;margin:5px 0;font-size:10px;}
+.l{color:#557766;}
+.v{color:#00ff88;font-weight:bold;}
+.v.r2{color:#ff4444;}
+.v.y{color:#ffd700;}
+.v.b{color:#00f2ff;}
+.v.p{color:#ff88cc;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0}}
+
+#pl{left:14px;top:50%;transform:translateY(-50%);width:210px;}
+#pr{right:14px;top:50%;transform:translateY(-50%);width:210px;}
+
+#ctrl{position:fixed;top:84px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:9999;pointer-events:all !important;pointer-events:all;}
+.btn{padding:5px 14px;font-size:9px;letter-spacing:2px;cursor:pointer;background:transparent;font-family:'Courier New',monospace;transition:all .2s;}
+.btn:hover,.btn.active{background:rgba(0,255,102,.1);}
+.fl{border:1px solid #00ff66;color:#00ff66;}
+.fi{border:1px solid #ff4400;color:#ff4400;}
+.re{border:1px solid #00f2ff;color:#00f2ff;}
+.ni{border:1px solid #334433;color:#667766;}
+.tr{border:1px solid #ff88cc;color:#ff88cc;}
+.bi{border:1px solid #00f2ff;color:#00f2ff;}
+.rec{border:1px solid #ff0055;color:#ff0055;}
+.rec.active{background:rgba(255,0,85,.2);animation:blink .7s step-end infinite;}
+#rec-status{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:3px;color:#ff0055;z-index:9999;
+  background:rgba(0,0,0,.8);padding:3px 12px;border:1px solid #ff005533;
+  display:none;}
+
+#pb{bottom:14px;left:50%;transform:translateX(-50%);width:760px;display:flex;gap:10px;padding:12px 16px;border:1px solid #00ff6611;background:rgba(0,10,4,.9);}
+.ec{flex:1;text-align:center;padding:7px 4px;border-radius:3px;border:1px solid transparent;}
+.ec.ok{border-color:#00ff6644;}
+.ec.warn{border-color:#ff440044;}
+.ec.crit{border-color:#ff000044;}
+.ec.wat{border-color:#00f2ff44;}
+.en{font-size:8px;letter-spacing:2px;margin-bottom:3px;}
+.ec.ok .en{color:#00ff88;}
+.ec.warn .en{color:#ffaa00;}
+.ec.crit .en{color:#ff4444;}
+.ec.wat .en{color:#00f2ff;}
+.ev{font-size:9px;color:#cceedd;}
+.es{font-size:8px;color:#334455;margin-top:2px;}
+
+#pym{position:fixed;top:50%;right:230px;transform:translateY(-50%);
+  font-size:11px;color:#ff88cc;text-align:right;pointer-events:none;z-index:9999;
+  text-shadow:0 0 10px #ff88cc44;line-height:1.8;}
+
+/* TOUR HUD */
+#tour-hud{
+  display:none;
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:9999;pointer-events:none;text-align:center;
+}
+#tour-hud .zone-name{
+  font-size:32px;letter-spacing:8px;color:#ff4400;
+  text-shadow:0 0 30px #ff4400,0 0 80px #ff440055;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+#tour-hud .zone-data{font-size:13px;color:#ffd700;letter-spacing:3px;margin-top:8px;}
+#tour-hud .zone-coords{font-size:10px;color:#ff8866;letter-spacing:2px;margin-top:4px;}
+#tour-hud .zone-action{font-size:11px;color:#00f2ff;letter-spacing:3px;margin-top:8px;}
+#tour-hud .zone-bar{
+  width:300px;margin:10px auto 0;height:3px;background:#ff440044;
+  border:1px solid #ff440033;
+}
+#tour-hud .zone-bar-fill{
+  height:100%;background:#ff4400;width:0%;transition:width 0.1s linear;
+  box-shadow:0 0 10px #ff4400;
+}
+#tour-counter{
+  display:none;
+  position:fixed;top:130px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:#ff8866;letter-spacing:3px;z-index:9999;
+  background:rgba(0,0,0,0.7);padding:4px 12px;border:1px solid #ff440033;
+}
+
+/* TACTICAL SIDE PANEL */
+#tactical-panel {
+  position: fixed; right: -320px; top: 0; width: 300px; height: 100%;
+  background: rgba(0, 10, 4, 0.95); border-left: 2px solid #00f2ff;
+  padding: 30px 20px; z-index: 100; transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  backdrop-filter: blur(10px); display: flex; flex-direction: column;
+}
+#tactical-panel.active { right: 0; }
+.tp-header { font-size: 14px; letter-spacing: 4px; color: #00f2ff; margin-bottom: 25px; border-bottom: 1px solid #00f2ff44; padding-bottom: 10px; }
+.tp-row { margin: 12px 0; font-size: 11px; }
+.tp-label { color: #557766; display: block; margin-bottom: 4px; letter-spacing: 2px; }
+.tp-value { color: #fff; font-weight: bold; letter-spacing: 1px; }
+.tp-audit-btn {
+  margin-top: auto; padding: 15px; background: transparent; border: 1px solid #ff4400;
+  color: #ff4400; font-family: 'Courier New', monospace; cursor: pointer;
+  letter-spacing: 3px; font-size: 10px; transition: all 0.3s;
+}
+.tp-audit-btn:hover { background: rgba(255, 68, 0, 0.2); box-shadow: 0 0 20px rgba(255, 68, 0, 0.3); }
+.tp-close { position: absolute; top: 10px; left: 10px; color: #00f2ff; cursor: pointer; font-size: 18px; }
+
+/* ORBITAL LINK INDICATOR */
+#orbital-link {
+  position: fixed; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px;
+  background: rgba(0, 20, 10, 0.6); padding: 8px 15px; border: 1px solid #00ff8822;
+  border-radius: 20px; z-index: 50; pointer-events: none;
+}
+.ol-pulse { width: 10px; height: 10px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 10px #00ff88; animation: pulse 1s infinite; }
+.ol-text { font-size: 9px; letter-spacing: 2px; color: #00ff88; }
+
+/* BIO-CRITICAL ALERT OVERLAY */
+#bio-alert-overlay {
+  position: fixed; top: 55px; left: 50%; transform: translateX(-50%);
+  display: none; z-index: 90; pointer-events: none;
+}
+.bio-alert-card {
+  background: rgba(255, 20, 0, 0.12); border: 1px solid #ff2200;
+  padding: 12px 24px; border-radius: 4px;
+  backdrop-filter: blur(8px); text-align: center;
+  animation: alertSlide 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+@keyframes alertSlide { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.bio-alert-title { font-size: 11px; letter-spacing: 4px; color: #ff4400; margin-bottom: 6px; }
+.bio-alert-species { font-size: 14px; color: #fff; letter-spacing: 1px; }
+.bio-alert-detail { font-size: 9px; color: #ff8866; letter-spacing: 2px; margin-top: 5px; }
+
+/* BIO TACTICAL PANEL (extends tactical panel) */
+.tp-bio-section { border-top: 1px solid #00f2ff22; margin-top: 15px; padding-top: 12px; }
+.tp-bio-header { font-size: 10px; letter-spacing: 3px; color: #ff88cc; margin-bottom: 8px; }
+.tp-risk-bar { width: 100%; height: 6px; background: #112211; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+.tp-risk-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease, background 0.3s; }
+.tp-thermal-badge {
+  display: inline-block; padding: 3px 10px; font-size: 9px; letter-spacing: 2px;
+  border-radius: 2px; margin-top: 8px; font-weight: bold;
+}
+.tp-thermal-badge.bio-critico { background: rgba(255, 0, 0, 0.2); border: 1px solid #ff0000; color: #ff4444; }
+.tp-thermal-badge.alerta { background: rgba(255, 170, 0, 0.15); border: 1px solid #ffaa00; color: #ffcc00; }
+.tp-thermal-badge.seguro { background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; color: #00ff88; }
+
+/* BIO COUNTER (bottom-left) */
+#bio-counter {
+  position: fixed; bottom: 75px; left: 14px; display: none;
+  background: rgba(0, 10, 20, 0.85); border: 1px solid #00f2ff22;
+  padding: 10px 14px; z-index: 25; border-radius: 3px;
+}
+.bio-ct { font-size: 9px; letter-spacing: 2px; color: #00f2ff; margin-bottom: 4px; }
+.bio-cv { font-size: 11px; color: #fff; letter-spacing: 1px; }
+.bio-cv.danger { color: #ff4444; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+window.toggleGenerativePanel = function() {
+  const p = document.getElementById('generative-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+};
+
+window.activateGenerativeCore = function() {
+  const btn = document.querySelector('.gp-action-btn');
+  if (!btn) return;
+  btn.textContent = "SINTETIZANDO...";
+  btn.style.background = "rgba(255, 0, 255, 0.3)";
+  if (typeof treeGroup !== 'undefined') {
+    treeGroup.children.forEach(tree => {
+      tree.children.forEach(c => {
+        if(c.geometry && c.geometry.type === 'ConeGeometry') {
+          c.material.emissive.setHex(0xff00ff);
+          c.material.emissiveIntensity = 2;
+        }
+      });
+    });
+  }
+  setTimeout(() => {
+    btn.textContent = "NÚCLEO SINTÉTICO ATIVO";
+    btn.style.background = "rgba(0, 255, 136, 0.2)";
+    btn.style.borderColor = "#00ff88";
+    btn.style.color = "#00ff88";
+    setTimeout(() => {
+      if (typeof treeGroup !== 'undefined') {
+        treeGroup.children.forEach(tree => {
+          tree.children.forEach(c => {
+            if(c.geometry && c.geometry.type === 'ConeGeometry') {
+              const origCol = tree.userData.color || 0x0d4a10;
+              c.material.emissive.set(new THREE.Color(origCol).multiplyScalar(0.3));
+              c.material.emissiveIntensity = 1;
+            }
+          });
+        });
+      }
+    }, 2000);
+  }, 1500);
+};
+
+window.toggleTactical = function() {
+  const p = document.getElementById('tactical-panel');
+  p.classList.toggle('active');
+};
+</script>
+
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+
+<div id="title">
+  <h1>REDOMA DA BIODIVERSIDADE — AMAZÔNIA VIVA</h1>
+  <p>SYNAPSE HUB · MISSÃO AMBIENTAL · PYM PARTICLES · PROTEÇÃO FLORESTAL · 11/05/2026</p>
+</div>
+
+<div id="ctrl">
+  <button class="btn fl active" onclick="setMode('floresta')">FLORESTA</button>
+  <button class="btn fi" onclick="setMode('fogo')">INCÊNDIO</button>
+  <button class="btn re" onclick="setMode('restauro')">RESTAURO</button>
+  <button class="btn ni" onclick="setMode('noite')">NOITE</button>
+  <button class="btn bi" onclick="setMode('bio')">BIODIVERSIDADE</button>
+  <button class="btn do" onclick="setMode('dossel')" style="border-color:#00ff88; color:#00ff88;">DOSSEL</button>
+  <div style="width:2px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
+  <button class="btn tr" onclick="toggleTactical()" id="btn-filtros">🔍 FILTROS</button>
+  <button class="btn" style="border:1px solid #ff00ff; color:#ff00ff;" onclick="toggleGenerativePanel()" id="btn-gen">🧠 IA GENERATIVA</button>
+  <button class="btn" style="border:1px solid #ffd700; color:#ffd700;" onclick="toggleTour()">◉ TOUR FOCOS</button>
+  <button class="btn rec" onclick="toggleRecord()" id="rec-btn">⏺ GRAVAR</button>
+</div>
+<div id="rec-status">⏺ GRAVANDO... CLIQUE EM PARAR PARA BAIXAR</div>
+
+<div id="tour-hud">
+  <div class="zone-name" id="zone-name">PARÁ</div>
+  <div class="zone-data" id="zone-data">19.245 FOCOS ATIVOS · MONITORAMENTO REAL-TIME</div>
+  <div class="zone-coords" id="zone-coords">03°S 52°W · INPE ALERTA MÁXIMO</div>
+  <div class="zone-action" id="zone-action">⬡ DRONE SYNAPSE RESPONDENDO ⬡</div>
+  <div class="zone-bar"><div class="zone-bar-fill" id="zone-bar-fill"></div></div>
+</div>
+<div id="tour-counter"></div>
+
+<div class="panel" id="pl">
+  <div class="pt">◈ BIOMA AMAZÔNIA</div>
+  <div class="r"><span class="l">ÁREA MONIT.</span><span class="v">5.5M km²</span></div>
+  <div class="r"><span class="l">COBERTURA</span><span class="v">82.3%</span></div>
+  <div class="r"><span class="l">DESFLOREST.</span><span class="v r2">11.568 km²/ano</span></div>
+  <div class="r"><span class="l">FOCOS ATIVOS</span><span class="v r2 blink" id="focos">19.245</span></div>
+  <div class="r"><span class="l">ESPÉCIES</span><span class="v">~390.000</span></div>
+  <div class="r"><span class="l">RIOS</span><span class="v b">1.100+ afluentes</span></div>
+  <div class="r"><span class="l">SEQUESTRO CO₂</span><span class="v">2,3 Gt/ano</span></div>
+  <div class="r"><span class="l">TEMPERATURA</span><span class="v y">26.4°C média</span></div>
+  <div class="r"><span class="l">UMIDADE</span><span class="v b">88%</span></div>
+  <div class="r"><span class="l">CHUVA VIVA</span><span class="v b blink">◉ ATIVA</span></div>
+  <div class="r"><span class="l">STATUS PYM</span><span class="v p blink">◉ PROTEGENDO</span></div>
+</div>
+
+<div class="panel" id="pr">
+  <div class="pt">◈ MISSÃO SYNAPSE</div>
+  <div class="r"><span class="l">SONDAS FLORESTA</span><span class="v">6 ATIVAS</span></div>
+  <div class="r"><span class="l">DRONES COMBATE</span><span class="v r2">4 VOANDO</span></div>
+  <div class="r"><span class="l">SENSORES SOLO</span><span class="v">12 ONLINE</span></div>
+  <div class="r"><span class="l">VAULT DADOS</span><span class="v">/opt/synapse_vault</span></div>
+  <div class="r"><span class="l">SHA256 LOG</span><span class="v">23ms</span></div>
+  <div class="r"><span class="l">COMPRESS.</span><span class="v y">411x</span></div>
+  <div class="r"><span class="l">TDD TESTES</span><span class="v">6/6 ✓</span></div>
+  <div class="r"><span class="l">MOONDO IP</span><span class="v y">PROTEGIDO</span></div>
+  <div class="r"><span class="l">SEBRAE</span><span class="v y blink">◉ 08/05 CONCLUÍDO</span></div>
+  <div class="r"><span class="l">ASK</span><span class="v y">R$ 250.000</span></div>
+  <div class="r"><span class="l">NASA FIRMS</span><span class="v b">11/05/2026</span></div>
+  <div class="r"><span class="l">NEUTRONS PYM</span><span class="v p blink">⚛ ATIVOS</span></div>
+  <div class="r"><span class="l">PROPÓSITO</span><span class="v p">VIDA ❤</span></div>
+</div>
+
+<div id="pym">
+  ⚛ NEUTRONS PYM<br>
+  ESTABILIZANDO<br>
+  FOCOS REAIS<br>
+  ─────────────<br>
+  NASA FIRMS<br>
+  VIIRS · 2026<br>
+  ─────────────<br>
+  ENTROPIA→ZERO<br>
+  ✦ MAESTRO
+</div>
+
+<div class="panel" id="pb">
+  <div class="ec ok">
+    <div class="en">🌳 DOSSEL NORTE</div>
+    <div class="ev">◉ ÍNTEGRO</div>
+    <div class="es">Cobertura 94% · 18.5°C</div>
+  </div>
+  <div class="ec warn">
+    <div class="en">🔥 ZONA LESTE</div>
+    <div class="ev blink">⚠ 847 FOCOS</div>
+    <div class="es">Drone α2 combatendo</div>
+  </div>
+  <div class="ec crit">
+    <div class="en">🔥 ARCO DO FOGO</div>
+    <div class="ev blink">⚠ CRÍTICO</div>
+    <div class="es">MT/PA/RO · 4 drones</div>
+  </div>
+  <div class="ec ok">
+    <div class="en">💧 RIO AMAZONAS</div>
+    <div class="ev">◉ NÍVEL NORMAL</div>
+    <div class="es">pH 6.8 · 28.2°C</div>
+  </div>
+  <div class="ec ok">
+    <div class="en">🐦 BIODIVERSIDADE</div>
+    <div class="ev">◉ MONITORADA</div>
+    <div class="es">1.300 spp. aves ativas</div>
+  </div>
+  <div class="ec wat">
+    <div class="en">🌧 CHUVA VIVA</div>
+    <div class="ev blink">◉ GERANDO</div>
+    <div class="es">Rios voadores · 20Bt/dia</div>
+  </div>
+  <div class="ec ok">
+    <div class="en">🛰 SENTINEL SAT</div>
+    <div class="ev">◉ ORBIT 640km</div>
+    <div class="es">INPE sync · 15min</div>
+  </div>
+</div>
+
+<div id="tactical-panel">
+  <div class="tp-close" onclick="closeTactical()">×</div>
+  <div class="tp-header">AUDITORIA TÁTICA</div>
+  <div class="tp-row"><span class="tp-label">ID DO FOCO:</span><span class="tp-value" id="tp-id">-</span></div>
+  <div class="tp-row"><span class="tp-label">COORDENADAS:</span><span class="tp-value" id="tp-coords">-</span></div>
+  <div class="tp-row"><span class="tp-label">SATÉLITE:</span><span class="tp-value" id="tp-sat">-</span></div>
+  <div class="tp-row"><span class="tp-label">POTÊNCIA (FRP):</span><span class="tp-value" id="tp-frp">-</span></div>
+  <div class="tp-row"><span class="tp-label">ESTADO/BIOMA:</span><span class="tp-value" id="tp-biome">-</span></div>
+  <div class="tp-row"><span class="tp-label">TIMESTAMP:</span><span class="tp-value" id="tp-time">12/05/2026</span></div>
+  <div class="tp-bio-section" id="tp-bio-section" style="display:none">
+    <div class="tp-bio-header">⚡ CROSS-REF FOGO × FAUNA</div>
+    <div class="tp-row"><span class="tp-label">ESPÉCIE MAIS PRÓXIMA:</span><span class="tp-value" id="tp-bio-species">-</span></div>
+    <div class="tp-row"><span class="tp-label">DISTÂNCIA DO FOGO:</span><span class="tp-value" id="tp-bio-dist">-</span></div>
+    <div class="tp-row"><span class="tp-label">SCORE BIO-TÉRMICO:</span></div>
+    <div class="tp-risk-bar"><div class="tp-risk-fill" id="tp-risk-fill"></div></div>
+    <div id="tp-thermal-badge"></div>
+  </div>
+  
+  <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #00f2ff22;">
+    <div class="tp-header" style="font-size: 10px; margin-bottom: 15px;">CAMADAS SOBERANAS V6</div>
+    <select id="filtro-camada" style="width: 100%; background: #001105; color: #ff00ff; border: 1px solid #ff00ff44; padding: 8px; font-family: monospace; font-size: 10px; outline: none;" onchange="toggleCamada(this.value)">
+      <option value="none">NENHUMA CAMADA ATIVA</option>
+      <option value="verra">PROJETOS VERRA (CARBONO)</option>
+      <option value="ti">TERRAS INDÍGENAS (FUNAI)</option>
+      <option value="uc">UNIDADES DE CONSERVAÇÃO</option>
+    </select>
+  </div>
+
+  <button class="tp-audit-btn" onclick="openRawAudit()">ABRIR DADO BRUTO (VPS)</button>
+</div>
+
+<div id="orbital-link">
+  <div class="ol-pulse"></div>
+  <div class="ol-text" id="ol-text">LINK ORBITAL ATIVO: VPS-MASTER</div>
+</div>
+
+<div id="bio-alert-overlay">
+  <div class="bio-alert-card">
+    <div class="bio-alert-title">⚠ ALERTA BIO-CRÍTICO</div>
+    <div class="bio-alert-species" id="bio-alert-species">🐆 Onça-Pintada em Risco</div>
+    <div class="bio-alert-detail" id="bio-alert-detail">FOGO A 3.2km · FRP 78.4 MW · AÇÃO IMEDIATA</div>
+  </div>
+</div>
+
+<div id="bio-counter">
+  <div class="bio-ct">🧬 TELEMETRIA DE FAUNA</div>
+  <div class="bio-cv" id="bio-species-count">12 ESPÉCIES · 40 AVISTAMENTOS</div>
+  <div class="bio-cv danger" id="bio-threat-count">0 EM RISCO TÉRMICO</div>
+</div>
+
+<script>
+// ═══ SCENE ═══
+const scene = new THREE.Scene();
+
+scene.fog = new THREE.FogExp2(0x001a08, 0.025);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 10000);
+
+// ═══ DIMENSIONAL SYNC (2D -> 3D) ═══
+const urlParams = new URLSearchParams(window.location.search);
+const qLat = urlParams.get('lat');
+const qLon = urlParams.get('lon');
+const authToken = urlParams.get('token') || 'MAESTRO_ADMIN_00';
+let startX = 0, startZ = 0;
+
+if (qLat && qLon) {
+    // Projeção: x = (lon + 60) * 8 | z = (lat + 5) * -8
+    startX = (parseFloat(qLon) + 60) * 8;
+    startZ = (parseFloat(qLat) + 5) * -8;
+    camera.position.set(startX, 12, startZ + 18);
+    camera.lookAt(startX, 0, startZ);
+    console.log(`🌌 Salto Quântico Sincronizado: Alvo [${qLat}, ${qLon}] -> [x:${startX}, z:${startZ}]`);
+} else {
+    camera.position.set(0, 18, 35);
+    camera.lookAt(0, 0, 0);
+}
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true, powerPreference:'high-performance' });
+renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.toneMappingExposure = 1.8;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); }, false);
+renderer.domElement.addEventListener('webglcontextrestored', () => { loadVaultData(); loadBioData(); }, false);
+renderer.domElement.style.position = "fixed";
+renderer.domElement.style.top = "0";
+renderer.domElement.style.left = "0";
+renderer.domElement.style.zIndex = "0";
+document.body.insertBefore(renderer.domElement, document.body.firstChild);
+
+// ═══ LIGHTS ═══
+const ambient = new THREE.AmbientLight(0x112208, 1.5);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffeedd, 1.5);
+sun.position.set(20, 30, 10);
+scene.add(sun);
+const greenFill = new THREE.PointLight(0x00ff44, 2, 50);
+greenFill.position.set(0, 15, 0);
+scene.add(greenFill);
+
+// ═══ GROUND ═══
+const groundGeo = new THREE.PlaneGeometry(120, 120, 60, 60);
+const groundMat = new THREE.MeshPhongMaterial({ color:0x0a1a06, emissive:0x040d02, specular:0x112208, shininess:10, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = 0;
+scene.add(ground);
+const gwire = new THREE.Mesh(groundGeo.clone(), new THREE.MeshBasicMaterial({color:0x00ff2211, wireframe:true, transparent:true, opacity:0.07, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+gwire.rotation.x = -Math.PI/2; gwire.position.y = 0.02; scene.add(gwire);
+
+// ═══ STARS ═══
+const sg = new THREE.BufferGeometry();
+const sp = new Float32Array(4000*3);
+for(let i=0;i<4000*3;i++) sp[i]=(Math.random()-.5)*500;
+sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+scene.add(new THREE.Points(sg, new THREE.PointsMaterial({color:0xffffff,size:0.3,transparent:true,opacity:0.5})));
+
+// ═══ TREES ═══
+function makeTree(x, z, h, col) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, h*0.35, 6),
+    new THREE.MeshPhongMaterial({color:0x3d1a00, emissive:0x1a0800}));
+  trunk.position.y = h*0.175; g.add(trunk);
+  [0.9, 0.65, 0.4].forEach((s, i) => {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(s*1.0, h*0.35, 7),
+      new THREE.MeshPhongMaterial({color:col, emissive:new THREE.Color(col).multiplyScalar(0.3), shininess:30}));
+    cone.position.y = h*0.35 + i*h*0.22; g.add(cone);
+  });
+  g.position.set(x, 0, z);
+  return g;
+}
+const treeColors = [0x0d4a10, 0x0f5c14, 0x126016, 0x0a4009, 0x1a7020, 0x0c5511];
+const treeGroup = new THREE.Group(); scene.add(treeGroup);
+for(let i=0;i<280;i++) {
+  const x=(Math.random()-0.5)*90, z=(Math.random()-0.5)*90;
+  if(Math.sqrt(x*x+z*z)<6) continue;
+  treeGroup.add(makeTree(x, z, 2.5+Math.random()*3.5, treeColors[Math.floor(Math.random()*treeColors.length)]));
+}
+
+// ═══ RIVER ═══
+const riverGeo = new THREE.PlaneGeometry(3.5, 80, 12, 40);
+const riverMat = new THREE.MeshPhongMaterial({color:0x003366,emissive:0x001122,specular:0x00aaff,shininess:300,transparent:true,opacity:0.85});
+const river = new THREE.Mesh(riverGeo, riverMat);
+river.rotation.x=-Math.PI/2; river.position.set(-18,0.05,5); river.rotation.z=0.3;
+scene.add(river);
+const riverGlow = new THREE.Mesh(riverGeo.clone(), new THREE.MeshBasicMaterial({color:0x0044aa,transparent:true,opacity:0.15}));
+riverGlow.rotation.x=-Math.PI/2; riverGlow.position.set(-18,0.1,5); riverGlow.rotation.z=0.3; scene.add(riverGlow);
+
+// ═══ VAULT INTEGRATION — Dados Reais via VPS ═══
+const VPS_BASE = window.location.origin; // tunnel-aware: funciona local e via Cloudflare
+let REAL_FIRES = [];
+let selectedFocalPoint = null;
+
+async function loadVaultData() {
+    try {
+        console.log("🛰️ Solicitando dados via Link Orbital...");
+        // Usando amazonia_light para o protocolo de baixa entropia (92x compressão)
+        const response = await fetch(`${VPS_BASE}/amazonia_light?token=${authToken}`);
+        const data = await response.json();
+        
+        // Mapeando os clusters otimizados
+        REAL_FIRES = data.fire_clusters.map((f, i) => {
+            return {
+                id: `FC-${1000 + i}`,
+                x: (f.lon + 60) * 8,
+                z: (f.lat + 5) * -8,
+                frp: f.avg_frp,
+                max_frp: f.max_frp,
+                count: f.count,
+                intensity: Math.min(10, Math.floor(f.avg_frp / 10) + 1),
+                lat: f.lat, lon: f.lon,
+                state: f.estados || 'AMAZÔNIA',
+                bioma: f.biomas || 'Amazônia',
+                conf: 'HIGH'
+            };
+        });
+        
+        TOTAL_FOCOS_REAL = data.stats.total_focos || 0;
+        DATA_REAL = data.stats?.updated_at || new Date().toLocaleDateString('pt-BR');
+        document.getElementById('focos').textContent = TOTAL_FOCOS_REAL.toLocaleString('pt-BR') + ' · NASA FIRMS';
+        console.log("🔥 Vault sincronizado via VPS:", REAL_FIRES.length, "clusters carregados.");
+        initFires();
+    } catch (e) {
+        console.error("❌ Erro ao carregar Vault via VPS:", e);
+        // Fallback local caso a VPS esteja offline
+        const response = await fetch('amazonia_legal/data/amazonia_light.json').catch(() => null);
+        if(response) {
+            const data = await response.json();
+            REAL_FIRES = data.fire_clusters.map((f, i) => ({
+                id: `FC-${1000 + i}`,
+                x: (f.lon + 60) * 8, z: (f.lat + 5) * -8,
+                frp: f.avg_frp, intensity: 5, lat: f.lat, lon: f.lon,
+                state: f.estados, bioma: f.biomas
+            }));
+            initFires();
+        }
+    }
+}
+let TOTAL_FOCOS_REAL = 0; // preenchido por loadVaultData() com stats.total_focos real
+let DATA_REAL = '—';
+
+function levelFromFrp(frp) {
+  if(frp > 100) return 'EMERGÊNCIA';
+  if(frp > 60)  return 'CRÍTICO';
+  if(frp > 40)  return 'ALTO';
+  if(frp > 25)  return 'MODERADO';
+  return 'BAIXO';
+}
+function actionFromFrp(frp) {
+  if(frp > 100) return '⚛ NEUTRONS PYM — CONTENÇÃO MÁXIMA';
+  if(frp > 60)  return '⬡ DRONE SYNAPSE MOBILIZADO';
+  if(frp > 40)  return '⬡ SATÉLITE CONFIRMANDO · PYM ATIVO';
+  return '◉ MONITORAMENTO CONTÍNUO';
+}
+function colorFromFrp(frp) {
+  if(frp > 100) return '#ff0000';
+  if(frp > 60)  return '#ff4400';
+  if(frp > 40)  return '#ff8800';
+  if(frp > 25)  return '#ffcc00';
+  return '#00ff88';
+}
+
+let currentFogBaseDensity = 0.005; // densidade-base do modo atual — animate() usa para escalar dinamicamente
+let fireZoneData = []; // preenchido por initFires() após loadVaultData()
+
+document.getElementById('focos').textContent = TOTAL_FOCOS_REAL.toLocaleString('pt-BR') + ' · NASA FIRMS';
+
+const fireGroup = new THREE.Group(); scene.add(fireGroup);
+const bioGroup = new THREE.Group(); scene.add(bioGroup);
+const fires = [];
+const bioNodes = [];
+const pymNeutronGroups = []; 
+
+let REAL_BIO = [];
+let isDosselMode = false;
+let BIO_ALERTS = [];
+let bioAlertQueue = [];
+let bioAlertTimer = null;
+
+async function loadBioData() {
+    try {
+        // Tentar VPS primeiro, fallback local
+        let bioData, riskData;
+        try {
+            const [bioRes, riskRes] = await Promise.all([
+                fetch(`${VPS_BASE}/biodiversidade_amazonia?token=${authToken}`),
+                fetch(`${VPS_BASE}/bio_thermal_risk?token=${authToken}`)
+            ]);
+            bioData = await bioRes.json();
+            riskData = await riskRes.json();
+        } catch(e) {
+            console.warn("⚠️ VPS offline para bio, tentando local...");
+            const [bioRes, riskRes] = await Promise.all([
+                fetch('amazonia_legal/data/biodiversidade_amazonia.json'),
+                fetch('amazonia_legal/data/bio_thermal_risk.json')
+            ]);
+            bioData = await bioRes.json();
+            riskData = await riskRes.json();
+        }
+
+        REAL_BIO = bioData.features.map(f => {
+            const [lon, lat] = f.geometry.coordinates;
+            const p = f.properties;
+            return {
+                x: (lon + 60) * 8,
+                z: (lat + 5) * -8,
+                lat, lon,
+                name: p.name,
+                status: p.status,
+                statusCode: p.status_code,
+                icon: p.icon,
+                risk: p.risk_score,
+                pop: p.estimated_pop,
+                habitat: p.habitat || '',
+                nearestFireKm: p.nearest_fire_km || 999,
+                nearestFireFrp: p.nearest_fire_frp || 0,
+                thermalStatus: p.thermal_status || 'SEGURO'
+            };
+        });
+
+        BIO_ALERTS = riskData.alerts || [];
+
+        // Atualizar contadores
+        const speciesNames = new Set(REAL_BIO.map(b => b.name));
+        const threatened = REAL_BIO.filter(b => b.thermalStatus !== 'SEGURO').length;
+        document.getElementById('bio-species-count').textContent =
+            `${speciesNames.size} ESPÉCIES · ${REAL_BIO.length} AVISTAMENTOS`;
+        document.getElementById('bio-threat-count').textContent =
+            `${threatened} EM RISCO TÉRMICO`;
+
+        // Atualizar orbital link
+        document.getElementById('ol-text').textContent =
+            `LINK ORBITAL ATIVO · BIO: ${speciesNames.size} spp · ALERTAS: ${BIO_ALERTS.length}`;
+
+        console.log("🦋 Bio-Vault sincronizado:", REAL_BIO.length, "avistamentos,", BIO_ALERTS.length, "alertas.");
+        initBioNodes();
+        initBioHeatmap();
+
+        // Disparar alertas bio-críticos
+        if(BIO_ALERTS.length > 0) {
+            bioAlertQueue = [...BIO_ALERTS];
+            cycleBioAlerts();
+        }
+    } catch (e) {
+        console.error("❌ Erro ao carregar Bio-Vault:", e);
+    }
+}
+
+function cycleBioAlerts() {
+    if(bioAlertQueue.length === 0) {
+        document.getElementById('bio-alert-overlay').style.display = 'none';
+        return;
+    }
+    const alert = bioAlertQueue.shift();
+    const overlay = document.getElementById('bio-alert-overlay');
+    document.getElementById('bio-alert-species').textContent =
+        `${alert.icon} ${alert.species}`;
+    document.getElementById('bio-alert-detail').textContent =
+        `FOGO A ${alert.distance_km}km · FRP ${alert.fire_frp} MW · RISCO ${alert.risk_score}/100`;
+    overlay.style.display = 'block';
+
+    // Auto-cycle through alerts
+    if(bioAlertTimer) clearTimeout(bioAlertTimer);
+    bioAlertTimer = setTimeout(() => {
+        overlay.style.display = 'none';
+        setTimeout(() => cycleBioAlerts(), 500);
+    }, 4000);
+}
+
+function createTextTexture(text, color, size) {
+    const canvas = document.createElement('canvas');
+    const s = size || 128;
+    canvas.width = s; canvas.height = s;
+    const ctx = canvas.getContext('2d');
+    ctx.font = `${Math.floor(s*0.5)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(text, s/2, s/2);
+    return new THREE.CanvasTexture(canvas);
+}
+
+// ═══ BIO HEATMAP (Ground Plane) ═══
+const bioHeatGroup = new THREE.Group(); scene.add(bioHeatGroup);
+bioHeatGroup.visible = false;
+
+function initBioHeatmap() {
+    while(bioHeatGroup.children.length > 0) bioHeatGroup.remove(bioHeatGroup.children[0]);
+
+    REAL_BIO.forEach(b => {
+        const radius = b.risk > 70 ? 5 : b.risk > 40 ? 3.5 : 2;
+        const color = b.thermalStatus === 'BIO-CRÍTICO' ? 0xff2200
+                    : b.thermalStatus === 'ALERTA' ? 0xffaa00
+                    : 0x00f2ff;
+        const opacity = b.thermalStatus === 'BIO-CRÍTICO' ? 0.25
+                      : b.thermalStatus === 'ALERTA' ? 0.15
+                      : 0.08;
+
+        // Heatmap disc on ground
+        const disc = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, 24),
+            new THREE.MeshBasicMaterial({
+                color, transparent: true, opacity,
+                side: THREE.DoubleSide, depthWrite: false
+            })
+        );
+        disc.rotation.x = -Math.PI / 2;
+        disc.position.set(b.x, 0.08, b.z);
+        bioHeatGroup.add(disc);
+
+        // Outer ring for critical zones
+        if(b.thermalStatus !== 'SEGURO') {
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(radius + 0.5, 0.06, 6, 32),
+                new THREE.MeshBasicMaterial({
+                    color, transparent: true, opacity: opacity * 2
+                })
+            );
+            ring.rotation.x = Math.PI / 2;
+            ring.position.set(b.x, 0.1, b.z);
+            ring.userData.pulsePhase = Math.random() * Math.PI * 2;
+            bioHeatGroup.add(ring);
+        }
+    });
+}
+
+function initBioNodes() {
+    while(bioGroup.children.length > 0) bioGroup.remove(bioGroup.children[0]);
+    bioNodes.length = 0;
+
+    REAL_BIO.forEach(b => {
+        const bg = new THREE.Group();
+
+        // Cor baseada no Score Bio-Térmico
+        const isCritical = b.thermalStatus === 'BIO-CRÍTICO';
+        const isAlert = b.thermalStatus === 'ALERTA';
+        const nodeColor = isCritical ? 0xff2200 : isAlert ? 0xffaa00 : 0x00f2ff;
+        const emissive = isCritical ? 0xff1100 : isAlert ? 0xff8800 : 0x0088ff;
+
+        // Core sphere — tamanho proporcional ao risco
+        const sphereRadius = 0.5 + (b.risk / 100) * 0.6;
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(sphereRadius, 12, 12),
+            new THREE.MeshPhongMaterial({
+                color: nodeColor, emissive,
+                transparent: true, opacity: 0.85
+            })
+        );
+        bg.add(sphere);
+
+        // Ícone da espécie como Sprite
+        const spriteMat = new THREE.SpriteMaterial({
+            map: createTextTexture(b.icon || '🧬', 'white', 128),
+            transparent: true
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.position.y = 1.8; sprite.scale.set(2.2, 2.2, 1);
+        bg.add(sprite);
+
+        // Aura de proteção — muda de cor com o risco
+        const aura = new THREE.Mesh(
+            new THREE.TorusGeometry(1.4, 0.05, 6, 28),
+            new THREE.MeshBasicMaterial({ color: nodeColor, transparent: true, opacity: 0.35 })
+        );
+        aura.rotation.x = Math.PI / 2;
+        bg.add(aura);
+
+        // Danger ring pulsante para status crítico
+        if(isCritical) {
+            const dangerRing = new THREE.Mesh(
+                new THREE.TorusGeometry(2.0, 0.08, 6, 32),
+                new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.4 })
+            );
+            dangerRing.rotation.x = Math.PI / 2;
+            dangerRing.userData.isDangerRing = true;
+            bg.add(dangerRing);
+        }
+
+        // Light para nós críticos
+        if(isCritical || isAlert) {
+            const light = new THREE.PointLight(nodeColor, 1.5, 8);
+            light.position.y = 2;
+            bg.add(light);
+        }
+
+        bg.position.set(b.x, 2 + Math.random() * 2, b.z);
+        bg.userData = {
+            phase: Math.random() * Math.PI * 2,
+            name: b.name,
+            status: b.status,
+            risk: b.risk,
+            pop: b.pop,
+            thermalStatus: b.thermalStatus,
+            nearestFireKm: b.nearestFireKm,
+            isBio: true,
+            bioIndex: bioNodes.length
+        };
+        bioGroup.add(bg);
+        bioNodes.push(bg);
+    });
+}
+
+
+function initFires() {
+    // Limpar anteriores se houver
+    while(fireGroup.children.length > 0) fireGroup.remove(fireGroup.children[0]);
+    pymNeutronGroups.forEach(g => scene.remove(g));
+    pymNeutronGroups.length = 0;
+    fires.length = 0;
+
+    fireZoneData = REAL_FIRES.map(f => ({
+      pos: [f.x, 0, f.z],
+      name: `${f.state} · ${Math.abs(f.lat).toFixed(2)}°${f.lat<0?'S':'N'} ${Math.abs(f.lon).toFixed(2)}°W`,
+      focos: Math.round(f.frp * 14).toLocaleString('pt-BR'),
+      state: f.state, level: levelFromFrp(f.frp),
+      coords: `${f.lat.toFixed(3)}° ${f.lon.toFixed(3)}°`,
+      action: actionFromFrp(f.frp), frp: f.frp, conf: f.conf
+    }));
+
+    fireZoneData.forEach(({pos:[x,y,z], level, frp}, fi) => {
+      const fg = new THREE.Group();
+      const intensity = Math.min(REAL_FIRES[fi] ? REAL_FIRES[fi].intensity : 6, 10); // Clamp to prevent freeze
+      const bgeo = new THREE.CircleGeometry(3+Math.random()*2, 16);
+      const bmesh = new THREE.Mesh(bgeo, new THREE.MeshPhongMaterial({color:0x0a0200,emissive:0x050100}));
+      bmesh.rotation.x = -Math.PI/2;
+      fg.add(bmesh);
+      
+      // Use fewer meshes for flames to optimize
+      for(let i=0;i<Math.min(intensity, 5);i++) {
+        const flame = new THREE.Mesh(
+          new THREE.ConeGeometry(0.3+Math.random()*0.5, 1.5+Math.random()*2.5, 4),
+          new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(0.04+Math.random()*0.06,1,0.5), transparent:true, opacity:0.8})
+        );
+        flame.position.set((Math.random()-.5)*5, 1, (Math.random()-.5)*5);
+        flame.userData.baseY=flame.position.y; flame.userData.phase=Math.random()*Math.PI*2;
+        fg.add(flame);
+      }
+      
+      const fLight = new THREE.PointLight(0xff4400, 1.5, 6);
+      fLight.position.set(0, 2, 0); fLight.userData.isFireLight=true; fg.add(fLight);
+      fg.position.set(x,y,z);
+      fires.push(fg); fireGroup.add(fg);
+
+      const neutronG = new THREE.Group();
+      const numOrbits = Math.min(3, Math.max(1, Math.floor(frp / 40))); // Optimized orbits
+      for(let oi=0; oi<numOrbits; oi++) {
+        const orbitR = 2.5 + oi * 1.6;
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(orbitR, 0.03, 4, 30),
+          new THREE.MeshBasicMaterial({color:0xff88cc, transparent:true, opacity:0.1}));
+        ring.rotation.x = Math.PI/2 + (oi * 0.4);
+        neutronG.add(ring);
+        const nCount = 2; // Fixed count to optimize
+        for(let ni=0; ni<nCount; ni++) {
+          const neutron = new THREE.Mesh(new THREE.SphereGeometry(0.1, 4, 4),
+            new THREE.MeshBasicMaterial({color:0xff88cc, transparent:true, opacity:0.7}));
+          neutron.userData.orbitR = orbitR;
+          neutron.userData.phase = (ni / nCount) * Math.PI * 2;
+          neutron.userData.speed = (0.8 + oi * 0.3) * (frp > 80 ? 1.5 : 1.0);
+          neutronG.add(neutron);
+        }
+      }
+      neutronG.position.set(x, 2, z);
+      scene.add(neutronG);
+      pymNeutronGroups.push(neutronG);
+    });
+
+    // ═══ EFEITO NASA: Visão Orbital Ininterrupta ═══
+    if(REAL_FIRES && REAL_FIRES.length > 0) {
+        const orbGeo = new THREE.BufferGeometry();
+        const pts = [], cols = [];
+        const orbC = new THREE.Color();
+        REAL_FIRES.forEach(f => {
+            if(!isNaN(f.x) && !isNaN(f.z)) {
+                pts.push(f.x, 0.5, f.z);
+                orbC.set(colorFromFrp(f.frp));
+                cols.push(orbC.r, orbC.g, orbC.b);
+            }
+        });
+        if(pts.length > 0) {
+            orbGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            orbGeo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+            const orbMat = new THREE.PointsMaterial({
+                size: 2.5, sizeAttenuation: false, vertexColors: true,
+                transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending
+            });
+            const orbitalFires = new THREE.Points(orbGeo, orbMat);
+            fireGroup.add(orbitalFires);
+        }
+    }
+
+}
+
+loadVaultData();
+loadBioData();
+
+// ═══ RAIN PARTICLES ═══
+const rainGeo = new THREE.BufferGeometry();
+const rainCount = 1500;
+const rainPos = new Float32Array(rainCount*3);
+const rainVel = new Float32Array(rainCount);
+for(let i=0;i<rainCount;i++){
+  rainPos[i*3]=(Math.random()-.5)*80; rainPos[i*3+1]=Math.random()*40; rainPos[i*3+2]=(Math.random()-.5)*80;
+  rainVel[i]=0.3+Math.random()*0.4;
+}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPos,3));
+const rainMat = new THREE.PointsMaterial({color:0x88ccff,size:0.12,transparent:true,opacity:0.5});
+const rain = new THREE.Points(rainGeo, rainMat); scene.add(rain);
+let showRain=false;
+
+// ═══ DRONES ═══
+const droneGroup = new THREE.Group(); scene.add(droneGroup);
+const droneMat = new THREE.MeshPhongMaterial({color:0xff4400,emissive:0x330000,shininess:200});
+const drones = [];
+[[0,2.1],[Math.PI/2,3.5],[Math.PI,2.8],[Math.PI*1.5,3.0]].forEach(([a,r],i) => {
+  const dg = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.25,0.5), droneMat); dg.add(body);
+  [[.5,.5],[.5,-.5],[-.5,.5],[-.5,-.5]].forEach(([rx,rz])=>{
+    const rotor = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,0.04,10),
+      new THREE.MeshPhongMaterial({color:0x333333}));
+    rotor.position.set(rx,0.14,rz); rotor.userData.isRotor=true; dg.add(rotor);
+  });
+  const spray = new THREE.Mesh(new THREE.ConeGeometry(0.4,1.5,8),
+    new THREE.MeshBasicMaterial({color:0x0088ff,transparent:true,opacity:0.3}));
+  spray.position.y=-1.2; spray.rotation.x=Math.PI; spray.userData.isSpray=true; dg.add(spray);
+  dg.userData={angle:a, radius:r*6, speed:0.5, targetFire:i};
+  drones.push(dg); droneGroup.add(dg);
+});
+
+// ═══ FOREST PROBES ═══
+const fprobeMat = new THREE.MeshPhongMaterial({color:0x00cc55,emissive:0x002211,shininess:160});
+const fprobes = [];
+for(let i=0;i<6;i++) {
+  const fp = new THREE.Group();
+  fp.add(Object.assign(new THREE.Mesh(new THREE.OctahedronGeometry(0.35,0), fprobeMat)));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5,0.04,6,20),
+    new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:0.6}));
+  ring.rotation.x=Math.PI/2; fp.add(ring);
+  fp.userData={angle:(i/6)*Math.PI*2, radius:12+i*2, speed:0.2+i*0.03, baseY:6};
+  fprobes.push(fp); scene.add(fp);
+}
+
+// ═══ PYM FIELD RINGS ═══
+const pymRings = [];
+for(let i=0;i<4;i++) {
+  const r = new THREE.Mesh(new THREE.TorusGeometry(4+i*5,0.06,6,80),
+    new THREE.MeshBasicMaterial({color:0xff88cc,transparent:true,opacity:0.08-i*0.015}));
+  r.rotation.x=Math.PI/2; r.position.y=0.5; scene.add(r); pymRings.push(r);
+}
+
+// ═══ SATELLITE ═══
+const satGroup = new THREE.Group();
+satGroup.add(new THREE.Mesh(new THREE.BoxGeometry(1,0.5,0.5),new THREE.MeshPhongMaterial({color:0x888888,emissive:0x222222})));
+[-1,1].forEach(s=>{
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(2.5,0.06,0.8),new THREE.MeshPhongMaterial({color:0x114488,emissive:0x001122}));
+  panel.position.x=s*1.75; satGroup.add(panel);
+});
+const satGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8),new THREE.MeshBasicMaterial({color:0x00f2ff,transparent:true,opacity:0.9}));
+satGlow.userData.isGlow=true; satGroup.add(satGlow);
+satGroup.position.set(0,30,0); scene.add(satGroup);
+const beamGeo = new THREE.CylinderGeometry(0.05,2,30,12,1,true);
+const satBeam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({color:0x00f2ff,transparent:true,opacity:0.08,side:THREE.DoubleSide}));
+satBeam.position.set(0,15,0); scene.add(satBeam);
+
+// ═══ MODE SYSTEM ═══
+let fireVisible=true, rainVisible=false, isBioMode = false;
+
+function updateEcosystemMaterials() {
+  treeGroup.children.forEach(tree => {
+    tree.children.forEach(c => {
+      if(c.geometry.type === 'ConeGeometry') {
+        const origCol = tree.userData.color || 0x0d4a10;
+        if (isDosselMode) {
+            c.material.emissive.setHex(0x00ff88);
+            c.material.emissiveIntensity = 3;
+            c.material.color.setHex(0x00ff88);
+        } else if (isBioMode) {
+            c.material.emissive.setHex(0x00f2ff);
+            c.material.emissiveIntensity = 2.5;
+            c.material.color.setHex(0x0088ff);
+        } else {
+            c.material.emissive.set(new THREE.Color(origCol).multiplyScalar(0.3));
+            c.material.emissiveIntensity = 1;
+            c.material.color.setHex(origCol);
+        }
+      }
+    });
+  });
+}
+
+
+window.setMode = function(m) {
+  isDosselMode = (m === "dossel");
+  isBioMode = (m === "bio");
+  document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  const modeClass = {floresta:'fl',fogo:'fi',restauro:'re',noite:'ni',tour:'tr',bio:'bi',dossel:'do'}[m] || 'fl';
+  const targetBtn = document.querySelector('.btn.' + modeClass);
+  if(targetBtn) targetBtn.classList.add('active');
+  const bioCounter = document.getElementById('bio-counter');
+  
+  switch(m) {
+    case 'floresta':
+      scene.fog.color.set(0x002a10); scene.fog.density=0.005; currentFogBaseDensity=0.005;
+      ambient.color.set(0x224422); ambient.intensity=2.0;
+      sun.color.set(0xffeedd); sun.intensity=5.5;
+      greenFill.color.set(0x00ff88); greenFill.intensity=6;
+      fireGroup.visible=true; bioGroup.visible=false; bioHeatGroup.visible=false;
+      fireVisible=true; rainVisible=false; rain.visible=false;
+      groundMat.color.set(0x0a1a06); bioCounter.style.display='none'; break;
+    case 'fogo':
+      scene.fog.color.set(0x441100); scene.fog.density=0.008; currentFogBaseDensity=0.008;
+      ambient.color.set(0x442200); ambient.intensity=1.8;
+      sun.color.set(0xff4400); sun.intensity=5.0;
+      greenFill.color.set(0xff4400); greenFill.intensity=8;
+      fireGroup.visible=true; bioGroup.visible=false; bioHeatGroup.visible=false;
+      fireVisible=true; rainVisible=false; rain.visible=false;
+      groundMat.color.set(0x1a0400); bioCounter.style.display='none'; break;
+    case 'bio':
+      scene.fog.color.set(0x001a44); scene.fog.density=0.004; currentFogBaseDensity=0.004;
+      ambient.color.set(0x112244); ambient.intensity=1.8;
+      sun.color.set(0x00f2ff); sun.intensity=3.2;
+      greenFill.color.set(0x00f2ff); greenFill.intensity=6;
+      fireGroup.visible=false; bioGroup.visible=true; bioHeatGroup.visible=true;
+      fireVisible=false; rainVisible=false; rain.visible=false;
+      groundMat.color.set(0x000a18); bioCounter.style.display='block'; break;
+    case 'restauro':
+      scene.fog.color.set(0x004422); scene.fog.density=0.005; currentFogBaseDensity=0.005;
+      ambient.color.set(0x114422); ambient.intensity=2.0;
+      sun.color.set(0xccffee); sun.intensity=4.0;
+      greenFill.color.set(0x00ffaa); greenFill.intensity=5;
+      fireGroup.visible=false; bioGroup.visible=false; bioHeatGroup.visible=false;
+      fireVisible=false; rainVisible=true; rain.visible=true;
+      groundMat.color.set(0x08200a); bioCounter.style.display='none'; break;
+    case 'noite':
+      scene.fog.color.set(0x000a1a); scene.fog.density=0.006; currentFogBaseDensity=0.006;
+      ambient.color.set(0x0a1533); ambient.intensity=1.5;
+      sun.color.set(0x4488ff); sun.intensity=2.5;
+      greenFill.color.set(0x003366); greenFill.intensity=4;
+      fireGroup.visible=true; bioGroup.visible=true; bioHeatGroup.visible=true;
+      fireVisible=true; rainVisible=false; rain.visible=false;
+      groundMat.color.set(0x020815); bioCounter.style.display='block'; break;
+    case 'dossel':
+      scene.fog.color.set(0x00ff88); scene.fog.density=0.003; currentFogBaseDensity=0.003;
+      ambient.color.set(0x004422); ambient.intensity=2.5;
+      sun.color.set(0x00ff88); sun.intensity=5.0;
+      greenFill.color.set(0x00ff88); greenFill.intensity=8;
+      fireGroup.visible=false; bioGroup.visible=true; bioHeatGroup.visible=false;
+      fireVisible=false; rainVisible=false; rain.visible=false;
+      groundMat.color.set(0x001105); bioCounter.style.display='block'; break;
+  }
+  updateEcosystemMaterials();
+};
+
+
+
+// ═══ TOUR MODE ═══
+let tourActive = false;
+let tourIndex = 0;
+let tourElapsed = 0;
+const TOUR_ZONE_DURATION = 5.0; // seconds per zone
+const TOUR_CAM_DIST = 12;
+const TOUR_CAM_HEIGHT = 8;
+let tourCamTarget = new THREE.Vector3();
+let tourCamPos = new THREE.Vector3();
+let tourTransitionProgress = 0;
+
+const hudEl = document.getElementById('tour-hud');
+const hudName = document.getElementById('zone-name');
+const hudData = document.getElementById('zone-data');
+const hudCoords = document.getElementById('zone-coords');
+const hudAction = document.getElementById('zone-action');
+const hudBarFill = document.getElementById('zone-bar-fill');
+const hudCounter = document.getElementById('tour-counter');
+
+const LEVEL_COLORS = { EMERGÊNCIA:'#ff0000', CRÍTICO:'#ff4400', ALTO:'#ff8800', MODERADO:'#ffcc00', BAIXO:'#00ff88' };
+
+function startTour(idx) {
+  const z = fireZoneData[idx];
+  const rf = REAL_FIRES[idx];
+  const fp = fires[idx].position;
+  tourCamTarget.set(fp.x, fp.y, fp.z);
+  const col = colorFromFrp(rf ? rf.frp : 40);
+  hudName.textContent = z.state.toUpperCase();
+  hudName.style.color = col;
+  hudName.style.textShadow = `0 0 30px ${col}`;
+  hudData.textContent = `${rf ? rf.frp.toFixed(1) : '?'} MW FRP · NÍVEL ${z.level} · CONF: ${rf ? rf.conf.toUpperCase() : '?'}`;
+  hudCoords.textContent = `${z.coords} · NASA FIRMS VIIRS · ${DATA_REAL}`;
+  hudAction.textContent = z.action;
+  hudBarFill.style.width = '0%';
+  hudBarFill.style.background = col;
+  hudCounter.textContent = `FOCO ${idx+1}/${fireZoneData.length} · ${TOTAL_FOCOS_REAL.toLocaleString('pt-BR')} ATIVOS NO BRASIL · NASA FIRMS`;
+  setMode('fogo');
+}
+
+window.toggleTour = function() {
+  tourActive = !tourActive;
+  if(tourActive) {
+    tourIndex = 0; tourElapsed = 0; tourTransitionProgress = 0;
+    hudEl.style.display = 'block';
+    hudCounter.style.display = 'block';
+    document.querySelector('.btn.tr').textContent = '◉ PARAR TOUR';
+    document.querySelector('.btn.tr').style.background = 'rgba(255,68,0,0.2)';
+    startTour(0);
+  } else {
+    hudEl.style.display = 'none';
+    hudCounter.style.display = 'none';
+    document.querySelector('.btn.tr').textContent = '◉ TOUR FOCOS';
+    document.querySelector('.btn.tr').style.background = '';
+    setMode('floresta');
+  }
+};
+
+// ═══ DRAG ═══
+let drag=false, px=0, py=0, baseRotY=0, baseRotX=0.2, camRadius=35;
+renderer.domElement.addEventListener('mousedown',e=>{if(!tourActive){drag=true;px=e.clientX;py=e.clientY;}});
+renderer.domElement.addEventListener('mouseup',()=>drag=false);
+renderer.domElement.addEventListener('mousemove',e=>{if(!drag)return; baseRotY+=(e.clientX-px)*0.005; baseRotX+=(e.clientY-py)*0.003; px=e.clientX;py=e.clientY;});
+renderer.domElement.addEventListener('wheel',e=>{if(!tourActive) camRadius=Math.max(8,Math.min(1500,camRadius+e.deltaY*0.1));});
+
+// ═══ INTERACTION SYSTEM (RAYCASTING) ═══
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function onPointerDown(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  
+  // Normalização precisa: Coordenadas relativas ao elemento do canvas
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  
+  raycaster.setFromCamera(mouse, camera);
+
+  console.log(`[SYNAPSE HUD] Click normalized: x=${mouse.x.toFixed(2)}, y=${mouse.y.toFixed(2)}`);
+
+  // Testar bio nodes primeiro (prioridade de clique)
+  if(bioGroup.visible) {
+    const bioIntersects = raycaster.intersectObjects(bioGroup.children, true);
+    if(bioIntersects.length > 0) {
+      let group = bioIntersects[0].object;
+      while(group.parent && group.parent !== bioGroup) group = group.parent;
+      const idx = bioNodes.indexOf(group);
+      if(idx !== -1) { 
+        console.log(`[SYNAPSE HUD] Bio Node selected: ${idx}`);
+        showBioAudit(idx); 
+        return; 
+      }
+    }
+  }
+
+  // Testar focos de incêndio
+  const intersects = raycaster.intersectObjects(fireGroup.children, true);
+  if (intersects.length > 0) {
+    const object = intersects[0].object;
+    let group = object;
+    while(group.parent && group.parent !== fireGroup) group = group.parent;
+    const idx = fires.indexOf(group);
+    if (idx !== -1) {
+      console.log(`[SYNAPSE HUD] Tactical Focus selected: ${idx}`);
+      showTacticalAudit(idx);
+    }
+  }
+}
+// Escutando diretamente no elemento do canvas para evitar offsets de janela
+renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+
+function showBioAudit(idx) {
+  const b = REAL_BIO[idx];
+  selectedFocalPoint = b;
+
+  document.getElementById('tp-id').textContent = `${b.icon} ${b.name}`;
+  document.getElementById('tp-coords').textContent = `${b.lat.toFixed(4)}°S ${Math.abs(b.lon).toFixed(4)}°W`;
+  document.getElementById('tp-sat').textContent = `HABITAT: ${b.habitat}`;
+  document.getElementById('tp-frp').textContent = `POP. EST: ${b.pop?.toLocaleString('pt-BR') || '?'}`;
+  document.getElementById('tp-biome').textContent = `STATUS: ${b.status}`;
+
+  // Bio-thermal section
+  const bioSection = document.getElementById('tp-bio-section');
+  bioSection.style.display = 'block';
+  document.getElementById('tp-bio-species').textContent = b.name;
+  document.getElementById('tp-bio-dist').textContent = `${b.nearestFireKm} km do fogo mais próximo`;
+
+  const riskFill = document.getElementById('tp-risk-fill');
+  riskFill.style.width = `${b.risk}%`;
+  riskFill.style.background = b.risk > 70 ? '#ff2200' : b.risk > 40 ? '#ffaa00' : '#00ff88';
+
+  const badge = document.getElementById('tp-thermal-badge');
+  const badgeClass = b.thermalStatus === 'BIO-CRÍTICO' ? 'bio-critico'
+                   : b.thermalStatus === 'ALERTA' ? 'alerta' : 'seguro';
+  badge.innerHTML = `<span class="tp-thermal-badge ${badgeClass}">${b.thermalStatus}</span>`;
+
+  document.getElementById('tactical-panel').classList.add('active');
+
+  if(!tourActive) {
+    const targetPos = new THREE.Vector3(b.x, 2, b.z);
+    camera.lookAt(targetPos);
+  }
+}
+
+function showTacticalAudit(idx) {
+  const f = REAL_FIRES[idx];
+  selectedFocalPoint = f;
+
+  document.getElementById('tp-id').textContent = f.id;
+  document.getElementById('tp-coords').textContent = `${f.lat.toFixed(4)}°S ${Math.abs(f.lon).toFixed(4)}°W`;
+  document.getElementById('tp-sat').textContent = 'VIIRS (NASA FIRMS)';
+  document.getElementById('tp-frp').textContent = `${f.frp.toFixed(2)} MW (Cluster: ${f.count} focos)`;
+  document.getElementById('tp-biome').textContent = `${f.state} / ${f.bioma}`;
+
+  // Esconder seção bio se clicar num foco
+  document.getElementById('tp-bio-section').style.display = 'none';
+
+  document.getElementById('tactical-panel').classList.add('active');
+
+  if(!tourActive) {
+    const targetPos = new THREE.Vector3(f.x, 2, f.z);
+    camera.lookAt(targetPos);
+  }
+}
+
+window.closeTactical = function() {
+  document.getElementById('tactical-panel').classList.remove('active');
+  selectedFocalPoint = null;
+}
+
+window.openRawAudit = function() {
+  if(!selectedFocalPoint) return;
+  // Abrir o JSON bruto na porta 8888 para auditoria
+  const endpoint = selectedFocalPoint.icon ? 'biodiversidade_amazonia' : 'focos_incendio';
+  window.open(`${VPS_BASE}/${endpoint}?token=${authToken}`, '_blank');
+}
+
+// ═══ ANIMATE ═══
+let t=0;
+const gverts = groundGeo.attributes.position;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.016;
+
+  // Ground undulate
+  for(let i=0;i<gverts.count;i++){
+    const x=gverts.getX(i),z=gverts.getZ(i);
+    gverts.setZ(i, Math.sin(x*0.15+t*0.3)*0.3+Math.cos(z*0.12+t*0.2)*0.2);
+  }
+  gverts.needsUpdate=true;
+
+  // Trees sway
+  treeGroup.children.forEach((tree,i)=>{
+    tree.rotation.z=Math.sin(t*0.8+i*0.5)*0.012;
+    tree.rotation.x=Math.cos(t*0.6+i*0.7)*0.008;
+  });
+
+  // Fire animate
+  fires.forEach(fg=>{
+    fg.children.forEach(c=>{
+      if(c.userData.phase!==undefined && !c.userData.isSmoke && !c.userData.isFireLight){
+        c.position.y=c.userData.baseY+Math.sin(t*8+c.userData.phase)*0.5;
+        c.scale.x=0.7+Math.sin(t*6+c.userData.phase)*0.35;
+        c.scale.z=0.7+Math.cos(t*7+c.userData.phase)*0.35;
+        c.material.opacity=0.6+Math.sin(t*5+c.userData.phase)*0.35;
+      }
+      if(c.userData.isSmoke){
+        c.position.y+=0.01; c.material.opacity-=0.0005;
+        if(c.position.y>14||c.material.opacity<0.01){c.position.y=2+Math.random()*2;c.material.opacity=0.25;}
+        c.scale.x+=0.002; c.scale.z+=0.002;
+        if(c.scale.x>2.5) c.scale.set(1,1,1);
+      }
+      if(c.userData.isFireLight){
+        c.intensity=1.5+Math.sin(t*8+fg.position.x)*1.5;
+      }
+    });
+  });
+
+  // Bio animate — upgraded with thermal pulsing
+  bioNodes.forEach(bg => {
+      bg.position.y += Math.sin(t*2 + bg.userData.phase)*0.01;
+      bg.rotation.y += 0.015;
+      const isCritical = bg.userData.thermalStatus === 'BIO-CRÍTICO';
+      const isAlert = bg.userData.thermalStatus === 'ALERTA';
+      bg.children.forEach(c => {
+          if(c instanceof THREE.PointLight) {
+              c.intensity = (isCritical ? 3 : isAlert ? 2 : 1) + Math.sin(t*4 + bg.userData.phase);
+          }
+          if(c.userData.isDangerRing) {
+              // Danger ring pulsing — urgência visual
+              c.material.opacity = 0.2 + Math.sin(t * 6 + bg.userData.phase) * 0.3;
+              c.scale.setScalar(1 + Math.sin(t * 3 + bg.userData.phase) * 0.15);
+          }
+          if(c instanceof THREE.Mesh && !c.userData.isDangerRing && c.geometry.type !== 'TorusGeometry') {
+              c.scale.setScalar(1 + Math.sin(t*3 + bg.userData.phase)*0.1);
+          }
+      });
+  });
+
+  // Bio Heatmap pulsing
+  if(bioHeatGroup.visible) {
+      bioHeatGroup.children.forEach(c => {
+          if(c.userData.pulsePhase !== undefined) {
+              c.material.opacity = 0.15 + Math.sin(t * 2 + c.userData.pulsePhase) * 0.1;
+              c.scale.setScalar(1 + Math.sin(t * 1.5 + c.userData.pulsePhase) * 0.05);
+          }
+      });
+  }
+
+  // Rain
+  if(rainVisible) {
+    const rp=rain.geometry.attributes.position.array;
+    for(let i=0;i<rainCount;i++){
+      rp[i*3+1]-=rainVel[i];
+      if(rp[i*3+1]<0){rp[i*3+1]=40;rp[i*3]=(Math.random()-.5)*80;rp[i*3+2]=(Math.random()-.5)*80;}
+    }
+    rain.geometry.attributes.position.needsUpdate=true;
+  }
+
+  // Drones
+  drones.forEach((d,i)=>{
+    const ud=d.userData;
+    ud.angle+=ud.speed*0.016;
+    const tgt=fires[ud.targetFire]?fires[ud.targetFire].position:new THREE.Vector3();
+    const tx=tgt.x+Math.cos(ud.angle)*ud.radius*0.2;
+    const tz=tgt.z+Math.sin(ud.angle)*ud.radius*0.2;
+    d.position.x+=(tx-d.position.x)*0.02; d.position.z+=(tz-d.position.z)*0.02;
+    d.position.y=8+Math.sin(t*2+i)*0.5;
+    d.rotation.y=Math.atan2(tx-d.position.x, tz-d.position.z);
+    d.children.forEach(c=>{if(c.userData.isRotor)c.rotation.y+=0.4;if(c.userData.isSpray)c.material.opacity=fireVisible?0.25+Math.sin(t*4)*0.15:0;});
+  });
+
+  // Forest probes
+  fprobes.forEach(fp=>{
+    fp.userData.angle+=fp.userData.speed*0.016;
+    fp.position.x=Math.cos(fp.userData.angle)*fp.userData.radius;
+    fp.position.z=Math.sin(fp.userData.angle)*fp.userData.radius;
+    fp.position.y=fp.userData.baseY+Math.sin(t*1.5+fp.userData.angle)*0.5;
+    fp.rotation.y+=0.03;
+  });
+
+  // ⚛ PYM NEUTRONS orbit animation
+  pymNeutronGroups.forEach((ng, gi) => {
+    ng.children.forEach(c => {
+      if(c.userData.orbitR !== undefined && c.userData.phase !== undefined) {
+        const a = t * c.userData.speed + c.userData.phase;
+        const tx = c.userData.tiltX || 0, tz = c.userData.tiltZ || 0;
+        c.position.x = Math.cos(a) * c.userData.orbitR;
+        c.position.y = Math.sin(a) * c.userData.orbitR * Math.sin(tx);
+        c.position.z = Math.sin(a) * c.userData.orbitR * Math.cos(tz);
+        c.material.opacity = (fireVisible ? 0.5 : 0.2) + Math.sin(t*3+gi)*0.2;
+      }
+    });
+    ng.visible = fireVisible;
+  });
+
+  // PYM rings
+  pymRings.forEach((r,i)=>{
+    r.rotation.z+=0.004/(i+1);
+    r.material.opacity=(0.08-i*0.015)*(0.7+Math.sin(t*1.5+i)*0.3);
+    r.scale.setScalar(0.97+Math.sin(t*1.2+i)*0.03);
+  });
+
+  // Satellite
+  satGroup.position.x=Math.cos(t*0.05)*25; satGroup.position.z=Math.sin(t*0.05)*25;
+  satGroup.rotation.y=t*0.05;
+  satGroup.children.forEach(c=>{if(c.userData.isGlow)c.material.opacity=0.7+Math.sin(t*3)*0.3;});
+  satBeam.position.x=satGroup.position.x*0.5; satBeam.position.z=satGroup.position.z*0.5;
+
+  // River shimmer
+  riverMat.specular.setHSL(0.55,1,0.5+Math.sin(t*2)*0.2);
+
+  // Lights
+  greenFill.intensity=(2+Math.sin(t*1.5)*0.4)*(fireVisible?1:1.5);
+  sun.position.x=Math.cos(t*0.02)*20;
+
+  // ═══ TOUR CAMERA ═══
+  if(tourActive) {
+    tourElapsed += 0.016;
+    const progress = Math.min(tourElapsed / TOUR_ZONE_DURATION, 1.0);
+    hudBarFill.style.width = (progress*100).toFixed(1)+'%';
+
+    // camera orbit around fire zone
+    const fp = fires[tourIndex].position;
+    const orbitAngle = t * 0.6;
+    const targetX = fp.x + Math.cos(orbitAngle) * TOUR_CAM_DIST;
+    const targetZ = fp.z + Math.sin(orbitAngle) * TOUR_CAM_DIST;
+    const targetY = TOUR_CAM_HEIGHT + Math.sin(t*0.4)*2;
+
+    // smooth camera approach
+    camera.position.x += (targetX - camera.position.x) * 0.04;
+    camera.position.y += (targetY - camera.position.y) * 0.03;
+    camera.position.z += (targetZ - camera.position.z) * 0.04;
+
+    // look slightly above fire center
+    const lookTarget = new THREE.Vector3(fp.x, fp.y + 3, fp.z);
+    camera.lookAt(lookTarget);
+
+    // advance to next zone
+    if(tourElapsed >= TOUR_ZONE_DURATION) {
+      tourElapsed = 0;
+      tourIndex = (tourIndex + 1) % fireZoneData.length;
+      startTour(tourIndex);
+    }
+  } else {
+    if(!drag) baseRotY += 0.001;
+    camera.position.x=Math.sin(baseRotY)*camRadius;
+    camera.position.z=Math.cos(baseRotY)*camRadius;
+    camera.position.y=14 + (camRadius-35)*0.5 + Math.sin(baseRotX)*camRadius*0.2;
+    camera.lookAt(0,3,0);
+  }
+
+  
+    // Dynamic Fog Sovereignty
+    if (scene.fog) {
+      const dist = camera.position.length();
+      // Reduzir densidade conforme afasta para manter visibilidade
+      scene.fog.density = currentFogBaseDensity * Math.min(1, 40 / dist);
+    }
+
+    renderer.render(scene, camera);
+}
+
+// ═══ PARAMETER SYNC ═══
+function checkParams() {
+    const params = new URLSearchParams(window.location.search);
+    const plat = parseFloat(params.get('lat'));
+    const plon = parseFloat(params.get('lon'));
+    
+    if(!isNaN(plat) && !isNaN(plon)) {
+        // Encontrar o foco mais próximo ou criar um marcador
+        // Para simplificação, vamos apenas mover a baseRotY para olhar na direção aproximada
+        // e ativar o HUD de zona.
+        console.log("Sincronizando com coordenadas:", plat, plon);
+        
+        const x = (plon + 60) * 8;
+        const z = (plat + 5) * -8;
+        
+        camera.position.set(x + 15, 12, z + 15);
+        camera.lookAt(x, 0, z);
+        
+        hudEl.style.display = 'block';
+        hudName.textContent = "ZONA AUDITADA";
+        hudData.textContent = `LAT: ${plat.toFixed(4)} | LON: ${plon.toFixed(4)}`;
+        hudCoords.textContent = "SINCRONIA SOBERANA ATIVA";
+        hudAction.textContent = "INSPEÇÃO DETALHADA EM 3D";
+    }
+}
+checkParams();
+
+animate();
+
+// ═══ MEDIARECORDER VIDEO CAPTURE ═══
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingActive = false;
+
+window.toggleRecord = function() {
+  const btn = document.getElementById('rec-btn');
+  const status = document.getElementById('rec-status');
+  if(!recordingActive) {
+    recordedChunks = [];
+    const stream = renderer.domElement.captureStream(30);
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9' : 'video/webm';
+    console.log("Iniciando gravação com MimeType:", mimeType);
+    try {
+        mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+    } catch(e) {
+        console.error("Erro ao iniciar MediaRecorder:", e);
+        // Fallback para webm básico se o codec falhar
+        mediaRecorder = new MediaRecorder(stream);
+    }
+    mediaRecorder.ondataavailable = e => { 
+        if(e.data && e.data.size > 0) {
+            recordedChunks.push(e.data);
+            console.log(`Chunk capturado: ${e.data.size} bytes`);
+        }
+    };
+    mediaRecorder.onstop = () => {
+      console.log("Gravação finalizada. Gerando Blob...");
+      if (recordedChunks.length === 0) {
+          console.error("Nenhum dado capturado durante a gravação.");
+          return;
+      }
+      const blob = new Blob(recordedChunks, {type:'video/webm'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'synapse_audit_3d_' + new Date().toISOString().replace(/[:.]/g, '-') + '.webm';
+      
+      // Delay tático para garantir que o browser processe o blob
+      setTimeout(() => {
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          console.log("Download disparado com sucesso.");
+      }, 500);
+
+      status.style.display = 'none';
+      btn.textContent = '⏺ GRAVAR';
+      btn.classList.remove('active');
+    };
+    mediaRecorder.start(100);
+    recordingActive = true;
+    btn.textContent = '⏹ PARAR';
+    btn.classList.add('active');
+    status.style.display = 'block';
+    // auto-start tour
+    if(!tourActive) toggleTour();
+  } else {
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    recordingActive = false;
+  }
+};
+
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+
+<div id="generative-panel" style="position:fixed; bottom:100px; left:50%; transform:translateX(-50%); width:400px; background:rgba(0,10,5,0.95); border:1px solid #ff00ff44; padding:20px; z-index:9999; display:none; backdrop-filter:blur(10px); border-radius:8px;">
+  <div style="font-size:12px; color:#ff00ff; letter-spacing:4px; margin-bottom:15px; border-bottom:1px solid #ff00ff22; padding-bottom:8px;">NÚCLEO DE SÍNTESE GENERATIVA V6</div>
+  <div style="font-size:10px; color:#fff; line-height:1.6; margin-bottom:15px; opacity:0.8;">
+    Ativando o motor de processamento quântico para super-resolução de biomassa e detecção preditiva de ignição. 
+    A Redoma da Biodiversidade V6 utiliza embeddings de GeoLLM para fundir telemetria de radar com sensores de solo.
+  </div>
+  <button class="gp-action-btn" onclick="activateGenerativeCore()" style="width:100%; padding:12px; background:rgba(255,0,255,0.1); border:1px solid #ff00ff; color:#ff00ff; font-family:monospace; cursor:pointer; letter-spacing:2px; font-size:11px;">INICIAR SÍNTESE DE SINGULARIDADE</button>
+</div>
+    
+</body>
+</html>

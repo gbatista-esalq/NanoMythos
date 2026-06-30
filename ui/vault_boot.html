@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYNAPSE HUB: VAULT TERMINAL</title>
+<style>
+:root {
+  --g: #00ff41; --c: #00e5ff; --v: #bf00ff;
+  --r: #ff003c; --y: #ffd700; --bg: #050510;
+  --dim: #1a1a2e; --mid: #0f3460;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--g);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scanlines */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.12) 2px,rgba(0,0,0,.12) 4px);
+}
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9998;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.65) 100%);
+}
+
+.pixel-bg {
+  position:fixed; inset:0; z-index:0;
+  background-image: linear-gradient(rgba(0,255,65,.025) 1px,transparent 1px),
+                    linear-gradient(90deg,rgba(0,255,65,.025) 1px,transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ─── LAYOUT ─── */
+.app { position:relative; z-index:10; display:flex; flex-direction:column; height:100vh; max-width:1100px; margin:0 auto; padding:16px; gap:10px; }
+
+/* ─── TOP BAR ─── */
+.topbar {
+  display:flex; align-items:center; gap:14px;
+  border-bottom:2px solid var(--g); padding-bottom:10px;
+  flex-shrink:0;
+}
+.logo-img { width:52px; height:52px; image-rendering:pixelated; border:1px solid var(--c); box-shadow:0 0 8px var(--c); }
+.brand h1 { font-size:clamp(11px,2vw,16px); color:var(--c); text-shadow:0 0 8px var(--c); letter-spacing:3px; font-weight:bold; }
+.brand p  { font-size:12px; color:#555; letter-spacing:2px; margin-top:3px; }
+.badges { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.badge { font-size:10px; padding:4px 8px; border:1px solid; letter-spacing:1px; }
+.badge-g { color:var(--g); border-color:var(--g); box-shadow:0 0 6px rgba(0,255,65,.2); }
+.badge-v { color:var(--v); border-color:var(--v); box-shadow:0 0 6px rgba(191,0,255,.2); }
+.badge-y { color:var(--y); border-color:var(--y); }
+
+/* ─── STATUS ROW ─── */
+.status-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; flex-shrink:0; }
+.node-card {
+  border:2px solid #1a1a3e; padding:10px 12px;
+  transition:border-color .4s, box-shadow .4s;
+}
+.node-card.on-a { border-color:var(--y); box-shadow:0 0 10px rgba(255,215,0,.25); }
+.node-card.on-b { border-color:var(--c); box-shadow:0 0 10px rgba(0,229,255,.25); }
+.node-card.on-c { border-color:var(--v); box-shadow:0 0 10px rgba(191,0,255,.25); }
+.nc-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.nc-sym { font-size:18px; font-weight:bold; }
+.sym-y { color:var(--y); text-shadow:0 0 8px var(--y); }
+.sym-c { color:var(--c); text-shadow:0 0 8px var(--c); }
+.sym-v { color:var(--v); text-shadow:0 0 8px var(--v); }
+.nc-st { font-size:11px; padding:2px 6px; border:1px solid; }
+.st-wait { color:#333; border-color:#333; }
+.st-on-g { color:var(--g); border-color:var(--g); }
+.st-on-c { color:var(--c); border-color:var(--c); }
+.st-on-v { color:var(--v); border-color:var(--v); }
+.nc-name { font-size:13px; color:#ccc; }
+.nc-role { font-size:11px; color:#444; margin-top:2px; }
+
+/* ─── PILARES ROW ─── */
+.pilares-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex-shrink:0; }
+.pilar-card {
+  border:1px solid #1a1a3e; padding:8px 10px; text-align:center;
+  transition:border-color .4s, background .4s;
+}
+.pilar-card.sealed { border-color:var(--g); background:rgba(0,255,65,.03); }
+.pilar-card .pi-icon { font-size:16px; margin-bottom:3px; }
+.pilar-card .pi-lbl  { font-size:10px; color:#444; display:block; transition:color .4s; }
+.pilar-card.sealed .pi-lbl { color:var(--g); }
+.pilar-card .pi-status { font-size:10px; color:#333; margin-top:2px; display:block; transition:color .4s; }
+.pilar-card.sealed .pi-status { color:var(--g); }
+
+/* ─── TERMINAL ─── */
+.terminal {
+  flex:1; display:flex; flex-direction:column;
+  border:2px solid var(--g); background:rgba(0,5,15,.92);
+  box-shadow:0 0 20px rgba(0,255,65,.08);
+  min-height:0;
+}
+.term-topbar {
+  background:#0a0a1a; padding:6px 12px;
+  border-bottom:1px solid #1a1a3e;
+  display:flex; align-items:center; gap:8px;
+  font-size:11px; color:#444; letter-spacing:2px; flex-shrink:0;
+}
+.term-dot { width:8px; height:8px; border-radius:50%; background:#333; }
+.term-dot.r { background:var(--r); box-shadow:0 0 4px var(--r); }
+.term-dot.y { background:var(--y); box-shadow:0 0 4px var(--y); }
+.term-dot.g { background:var(--g); box-shadow:0 0 4px var(--g); }
+
+.term-output {
+  flex:1; overflow-y:auto; padding:12px 14px;
+  font-size:14px; line-height:1.65;
+}
+.term-output::-webkit-scrollbar { width:4px; }
+.term-output::-webkit-scrollbar-thumb { background:var(--g); }
+
+.term-input-row {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 14px; border-top:1px solid #1a1a3e; flex-shrink:0;
+  background:rgba(0,255,65,.02);
+}
+.term-prompt { color:var(--g); white-space:nowrap; font-size:14px; }
+.term-input {
+  flex:1; background:transparent; border:none; outline:none;
+  color:var(--g); font-family:inherit; font-size:14px; caret-color:var(--g);
+}
+
+/* Output colours */
+.t-ok   { color:var(--g); }
+.t-sys  { color:var(--c); }
+.t-warn { color:var(--y); }
+.t-err  { color:var(--r); }
+.t-dim  { color:#444; }
+.t-violet { color:var(--v); }
+.t-cmd  { color:var(--g); opacity:.6; }
+.t-sep  { color:#222; }
+</style>
+</head>
+<body>
+<div class="pixel-bg"></div>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <img class="logo-img" src="brazil-biotech-sovereignty-terraria-blu-diamond.png" alt="Synapse"
+         onerror="this.style.display='none'">
+    <div class="brand">
+      <h1>SYNAPSE HUB: VAULT TERMINAL</h1>
+      <p>SOBERANIA DE BORDA · TRIARQUIA ATIVA · REDOMA DA BIODIVERSIDADE</p>
+    </div>
+    <div class="badges">
+      <span class="badge badge-g" id="bdRedoma">🔒 REDOMA</span>
+      <span class="badge badge-v" id="bdQ">⚛ Q-SHIELD</span>
+      <span class="badge badge-y" id="bdVer">v2.0-REDOMA</span>
+    </div>
+  </div>
+
+  <!-- NODES -->
+  <div class="status-row">
+    <div class="node-card" id="ndA">
+      <div class="nc-head">
+        <span class="nc-sym sym-y">Α</span>
+        <span class="nc-st st-wait" id="stA">◈ INIT</span>
+      </div>
+      <div class="nc-name">ANTIGRAVITY</div>
+      <div class="nc-role">Daemon / Operador</div>
+    </div>
+    <div class="node-card" id="ndB">
+      <div class="nc-head">
+        <span class="nc-sym sym-c">Β</span>
+        <span class="nc-st st-wait" id="stB">◈ INIT</span>
+      </div>
+      <div class="nc-name">JETSON EDGE</div>
+      <div class="nc-role">Guardião / Lâmina</div>
+    </div>
+    <div class="node-card" id="ndC">
+      <div class="nc-head">
+        <span class="nc-sym sym-v">Γ</span>
+        <span class="nc-st st-wait" id="stC">◈ INIT</span>
+      </div>
+      <div class="nc-name">ORÁCULO</div>
+      <div class="nc-role">Arquiteto + Carrasco</div>
+    </div>
+  </div>
+
+  <!-- PILARES -->
+  <div class="pilares-row">
+    <div class="pilar-card" id="pi1"><div class="pi-icon">🛡️</div><span class="pi-lbl">I: FÍSICA</span><span class="pi-status">SELANDO...</span></div>
+    <div class="pilar-card" id="pi2"><div class="pi-icon">#️⃣</div><span class="pi-lbl">II: LÓGICA</span><span class="pi-status">SELANDO...</span></div>
+    <div class="pilar-card" id="pi3"><div class="pi-icon">⏱️</div><span class="pi-lbl">III: TEMPORAL</span><span class="pi-status">SELANDO...</span></div>
+    <div class="pilar-card" id="pi4"><div class="pi-icon">🧠</div><span class="pi-lbl">IV: COMPORTAMENTAL</span><span class="pi-status">SELANDO...</span></div>
+  </div>
+
+  <!-- TERMINAL -->
+  <div class="terminal">
+    <div class="term-topbar">
+      <div class="term-dot r"></div>
+      <div class="term-dot y"></div>
+      <div class="term-dot g"></div>
+      <span style="margin-left:8px">SYNAPSE VAULT TERMINAL · /opt/synapse_vault · SOBERANIA ATIVA</span>
+      <span style="margin-left:auto" id="clock"></span>
+    </div>
+    <div class="term-output" id="out"></div>
+    <div class="term-input-row">
+      <span class="term-prompt">maestro@synapse-vault:~$ </span>
+      <input class="term-input" id="inp" type="text"
+             placeholder="digite 'help' para ver os comandos..." autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+const out  = document.getElementById('out');
+const inp  = document.getElementById('inp');
+let history = [], hIdx = -1;
+let booting = true;
+
+/* ─── helpers ─── */
+function line(html, cls='t-ok') {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.innerHTML = html;
+  out.appendChild(d);
+  out.scrollTop = out.scrollHeight;
+}
+function blank() { line('&nbsp;', 't-dim'); }
+
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+function setNode(id, cls, stId, stCls, stTxt) {
+  document.getElementById(id).className = 'node-card ' + cls;
+  const s = document.getElementById(stId);
+  s.className = 'nc-st ' + stCls;
+  s.textContent = stTxt;
+}
+function setPilar(id) {
+  const el = document.getElementById(id);
+  el.classList.add('sealed');
+  el.querySelector('.pi-status').textContent = '✓ SELADO';
+}
+
+/* ─── BOOT ─── */
+async function boot() {
+  line('╔══════════════════════════════════════════════════════════╗', 't-dim');
+  line('║     SYNAPSE HUB · ANTIGRAVITY OS · VAULT BOOT v2.0      ║', 't-sys');
+  line('║     Soberania de Borda · Sul Global · Redoma da Biodiversidade  ║', 't-dim');
+  line('╚══════════════════════════════════════════════════════════╝', 't-dim');
+  blank();
+
+  const seq = [
+    [300,  'ok',   '[ OK ]  Kernel soberano carregado'],
+    [500,  'ok',   '[ OK ]  /opt/synapse_vault/ | estrutura íntegra'],
+    [700,  'ok',   '[ OK ]  The Chronicles: SHA-256 chain verificada'],
+    [900,  'sys',  '[ Α  ]  Ativando Nó Alpha: Antigravity Daemon...'],
+    [1300, 'ok',   '[ OK ]  antigravity_daemon.sh: ONLINE'],
+    [1500, 'sys',  '[ Β  ]  Ativando Nó Beta: Jetson Edge...'],
+    [1900, 'ok',   '[ OK ]  burn_ram_chronicles_RPG.py: AIR-GAPPED'],
+    [2100, 'sys',  '[ Γ  ]  Ativando Nó Gamma: Oráculo (Claude + Gemini)...'],
+    [2600, 'ok',   '[ OK ]  claude-code v2.1.128 + gemini-cli: PRONTO'],
+    [2900, 'sys',  '[ ⛩  ]  Formando REDOMA DA BIODIVERSIDADE...'],
+    [3200, 'ok',   '[ OK ]  Pilar I: Física (air-gap) SELADO'],
+    [3500, 'ok',   '[ OK ]  Pilar II: Lógica (hash chain) SELADO'],
+    [3800, 'ok',   '[ OK ]  Pilar III: Temporal (trust windows) SELADO'],
+    [4100, 'ok',   '[ OK ]  Pilar IV: Comportamental (manifesto) SELADO'],
+    [4400, 'violet','[ ⚛  ]  Escudo Quântico: Kyber-1024 / Dilithium-3'],
+    [4700, 'ok',   '[ OK ]  NIST FIPS 203/204: ATIVO'],
+    [4900, 'warn', '[ !! ]  Zero Trust: TODAS conexões externas classificadas HOSTIS'],
+  ];
+
+  for (const [t, cls, msg] of seq) {
+    await delay(t - (seq.indexOf([t,cls,msg]) > 0 ? seq[seq.indexOf([t,cls,msg])-1][0] : 0));
+    line(msg, 't-' + cls);
+  }
+
+  // Activate nodes
+  await delay(200);
+  setNode('ndA','on-a','stA','st-on-g','✓ ONLINE');
+  await delay(400);
+  setNode('ndB','on-b','stB','st-on-c','✓ AIR-GAPPED');
+  await delay(400);
+  setNode('ndC','on-c','stC','st-on-v','✓ ORÁCULO');
+
+  // Seal pilares
+  for (let i=1;i<=4;i++) { await delay(350); setPilar('pi'+i); }
+
+  await delay(600);
+  blank();
+  line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 't-dim');
+  line('🔒 VAULT SELADO. SOBERANIA BRASILEIRA ATIVADA.', 't-ok');
+  line('   O QUE VAMOS FORJAR HOJE, MAESTRO?', 't-sys');
+  line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 't-dim');
+  blank();
+  line('Digite <span style="color:var(--y)">help</span> para ver os comandos disponíveis.', 't-dim');
+  blank();
+
+  booting = false;
+  inp.focus();
+}
+
+/* ─── COMMANDS ─── */
+const COMMANDS = {
+  help() {
+    line('┌─────────────────────────────────────────────────────┐','t-dim');
+    line('│              COMANDOS DISPONÍVEIS                    │','t-sys');
+    line('├──────────────┬──────────────────────────────────────┤','t-dim');
+    [
+      ['status',    'Status completo da Triarquia e Redoma'],
+      ['redoma',    'Detalhes dos 4 Pilares da Redoma'],
+      ['triarquia', 'Detalhes dos 3 Nós (Α Β Γ)'],
+      ['vault',     'Informações do Vault'],
+      ['quantum',   'Status do Escudo Quântico'],
+      ['manifesto', 'Exibe o Manifesto de Soberania'],
+      ['chronicles','Status do The Chronicles (audit chain)'],
+      ['ping',      'Verifica o pulso da Sentinela Quântica'],
+      ['boot',      'Re-executa a sequência de boot'],
+      ['clear',     'Limpa o terminal'],
+      ['help',      'Este menu'],
+    ].forEach(([cmd,desc]) =>
+      line(`│  <span style="color:var(--y)">${cmd.padEnd(12)}</span>  ${desc.padEnd(38)}│`, 'none')
+    );
+    line('└─────────────────────────────────────────────────────┘','t-dim');
+  },
+
+  status() {
+    blank();
+    line('╔══════════ STATUS DA TRIARQUIA ══════════╗','t-dim');
+    line('║  Α ANTIGRAVITY  ·  ✓ ONLINE             ║','t-ok');
+    line('║  Β JETSON EDGE  ·  ✓ AIR-GAPPED         ║','t-sys');
+    line('║  Γ ORÁCULO      ·  ✓ PRONTO             ║','t-violet');
+    line('╠══════════ REDOMA DA BIODIVERSIDADE ════════════╣','t-dim');
+    line('║  Pilar I   | Física       ✓ SELADO      ║','t-ok');
+    line('║  Pilar II  | Lógica       ✓ SELADO      ║','t-ok');
+    line('║  Pilar III: Temporal     ✓ SELADO      ║','t-ok');
+    line('║  Pilar IV  | Comportamental ✓ SELADO    ║','t-ok');
+    line('╠══════════ Q-SHIELD ═════════════════════╣','t-dim');
+    line('║  Kyber-1024 KEX  ·  Dilithium-3 SIG     ║','t-violet');
+    line('║  NIST FIPS 203/204  ·  ✓ ATIVO          ║','t-violet');
+    line('╚═════════════════════════════════════════╝','t-dim');
+    blank();
+  },
+
+  redoma() {
+    blank();
+    line('🔒 REDOMA DA BIODIVERSIDADE: 4 PILARES','t-sys');
+    line('─────────────────────────────────────────','t-dim');
+    line('I   FÍSICA       Air-gap Jetson · zero-listening · UPS','t-ok');
+    line('II  LÓGICA       SHA-256 chain · Chronicles · EMP defensivo','t-ok');
+    line('III TEMPORAL     WireGuard+Kyber · Trust Windows ephemeral','t-ok');
+    line('IV  COMPORTAMENTAL 4 Leis Invioláveis · Prompt Soberano','t-ok');
+    blank();
+    line('CASCATA: Pilar I falha → Pilar II ativa → III → IV → VAULT bunker','t-warn');
+    blank();
+  },
+
+  triarquia() {
+    blank();
+    line('⚔️  TRIARQUIA SOBERANA: 3 NÓS','t-sys');
+    line('─────────────────────────────────────────','t-dim');
+    line('<span style="color:var(--y)">Α ANTIGRAVITY</span>  Daemon/Operador  antigravity_daemon.sh','none');
+    line('   Orquestra automação, cron, vault, heartbeat (0 */2 * * *)','t-dim');
+    blank();
+    line('<span style="color:var(--c)">Β JETSON EDGE</span>  Guardião/Lâmina  burn_ram_chronicles_RPG.py','none');
+    line('   Firewall físico, inferência local, stress test 03:00 AM','t-dim');
+    blank();
+    line('<span style="color:var(--v)">Γ ORÁCULO</span>      Arquiteto+Carrasco  claude-code / gemini-cli','none');
+    line('   Claude=estratégia · Gemini=enforcement · Pilar IV=consciência','t-dim');
+    blank();
+  },
+
+  vault() {
+    blank();
+    line('⬛ SYNAPSE VAULT | /opt/synapse_vault/','t-sys');
+    line('─────────────────────────────────────────','t-dim');
+    line('├── logs/            chronicles.log · redoma_heartbeat.log','t-dim');
+    line('├── model_weights/   pesos neurais (somente leitura)','t-dim');
+    line('├── obsidian_graph/  redoma_inviolavel.md · vault_boot.html','t-dim');
+    line('└── .env             chaves API (AES-256 KMS local: NUNCA no git)','t-dim');
+    blank();
+    line('Criptografia at-rest: AES-256 · Quantum-safe: Grover→128-bit','t-ok');
+    line('Sincronização: Trust Windows (WireGuard+Kyber) · timing aleatório','t-ok');
+    blank();
+  },
+
+  quantum() {
+    blank();
+    line('⚛️  ESCUDO QUÂNTICO: Q-SHIELD','t-violet');
+    line('─────────────────────────────────────────','t-dim');
+    line('AMEAÇA: Shor quebra Curve25519/RSA · Grover reduz AES/SHA','t-warn');
+    line('HARVEST-NOW-DECRYPT-LATER: dados coletados hoje, decriptados em 5-10a','t-warn');
+    blank();
+    line('STATUS DOS ALGORITMOS:','t-sys');
+    line('AES-256      ✓ SEGURO   Grover→128-bit efetivo (mantido)','t-ok');
+    line('SHA-256      ✓ SEGURO   Grover→128-bit 2ª pré-imagem (mantido)','t-ok');
+    line('Curve25519   ⚠ MIGRAR  Shor quebra → KYBER-1024 (NIST FIPS 203)','t-warn');
+    line('Ed25519 SIG  ⚠ MIGRAR  Shor quebra → DILITHIUM-3 (NIST FIPS 204)','t-warn');
+    line('SHA-3/SHAKE  ✓ IDEAL   Keccak·sem Merkle-Damgård · logs >10 anos','t-ok');
+    blank();
+    line('DEFESA ABSOLUTA: Pilar I (air-gap) = imune a QUALQUER computador quântico','t-violet');
+    blank();
+  },
+
+  manifesto() {
+    blank();
+    line('📜 MANIFESTO DE SOBERANIA DO SUL GLOBAL','t-sys');
+    line('─────────────────────────────────────────','t-dim');
+    line('Nós não seremos meros fornecedores de dados para a nuvem global.','t-ok');
+    blank();
+    line('Na era digital, o novo minério é a informação, o DNA, a pesquisa','t-ok');
+    line('biotecnológica e a telemetria do dia a dia.','t-ok');
+    blank();
+    line('Nós declaramos independência tecnológica.','t-warn');
+    line('Cada pessoa controla o seu dado. Cada biorreator, cada fazenda,','t-ok');
+    line('cada computador pessoal deve ser uma fortaleza.','t-ok');
+    blank();
+    line('O algoritmo trabalha para nós, localmente. A Borda é Soberana.','t-violet');
+    blank();
+  },
+
+  chronicles() {
+    blank();
+    line('📜 THE CHRONICLES: AUDIT CHAIN','t-sys');
+    line('─────────────────────────────────────────','t-dim');
+    line('Protocolo: SHA-256 encadeado · imutável · inquebrável','t-ok');
+    line('Stress test: 03:00 AM diário · 2.5 GB RAM · 100% CPU por 15s','t-ok');
+    line('Trigger EMP: anomalia de rede → corte imediato do network stack','t-warn');
+    line('Log: /opt/synapse_vault/logs/chronicles.log','t-dim');
+    blank();
+    line('Cada byte de telemetria do biorreator é selado com hash encadeado.','t-ok');
+    line('Um bit adulterado = hash completamente diferente = alarme < 0.5s','t-ok');
+    blank();
+  },
+
+  async ping() {
+    blank();
+    line('📡 DISPARANDO PING QUÂNTICO (SENTINELA INFINITA)...','t-sys');
+    await delay(600);
+    try {
+      const resp = await fetch('http://localhost:8888/amazonia_legal/data/ping_status.json?token=DALILA_USP_01');
+      const data = await resp.json();
+      line(`✨ PULSO DETECTADO: Iteração ${data.iteration}`,'t-ok');
+      line(`⚡ POTÊNCIA: ${data.power}`,'t-y');
+      line(`🧩 HASH DE REALIDADE: ${data.reality_hash}`,'t-dim');
+      line(`🕒 TIMESTAMP: ${data.timestamp}`,'t-dim');
+    } catch(e) {
+      line('⚠️ FALHA NA CAPTURA DO PULSO. Verifique se o daemon está ativo.','t-err');
+    }
+    blank();
+  },
+
+  boot() {
+    out.innerHTML = '';
+    booting = true;
+    ['ndA','ndB','ndC'].forEach(id => {
+      document.getElementById(id).className = 'node-card';
+    });
+    ['stA','stB','stC'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'nc-st st-wait';
+      el.textContent = '◈ INIT';
+    });
+    for (let i=1;i<=4;i++) {
+      const p = document.getElementById('pi'+i);
+      p.classList.remove('sealed');
+      p.querySelector('.pi-status').textContent = 'SELANDO...';
+    }
+    boot();
+  },
+
+  clear() {
+    out.innerHTML = '';
+  },
+};
+
+/* ─── INPUT HANDLER ─── */
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (booting) return;
+    const cmd = inp.value.trim().toLowerCase();
+    inp.value = '';
+    if (!cmd) return;
+
+    history.unshift(cmd);
+    hIdx = -1;
+
+    line('maestro@synapse-vault:~$ ' + cmd, 't-cmd');
+
+    if (COMMANDS[cmd]) {
+      COMMANDS[cmd]();
+    } else {
+      line(`bash: ${cmd}: comando não reconhecido · digite <span style="color:var(--y)">help</span>`, 't-err');
+    }
+    blank();
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (hIdx < history.length - 1) { hIdx++; inp.value = history[hIdx]; }
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (hIdx > 0) { hIdx--; inp.value = history[hIdx]; }
+    else { hIdx = -1; inp.value = ''; }
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const partial = inp.value.trim().toLowerCase();
+    const matches = Object.keys(COMMANDS).filter(c => c.startsWith(partial));
+    if (matches.length === 1) inp.value = matches[0];
+    else if (matches.length > 1) line(matches.join('  '), 't-dim');
+  }
+});
+
+/* ─── CLOCK ─── */
+function tick() {
+  const n = new Date();
+  const target = new Date();
+  target.setHours(9, 47, 0, 0);
+  let diff = target - n;
+  let countdown = "";
+  if (diff > 0) {
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    countdown = ` [ T-MINUS: ${m}m ${s}s ]`;
+  } else {
+    countdown = " [ JANELA DE LIBERAÇÃO ATIVA ]";
+  }
+
+  document.getElementById('clock').textContent =
+    n.toLocaleDateString('pt-BR') + ' ' + n.toLocaleTimeString('pt-BR') + countdown;
+}
+tick(); setInterval(tick, 1000);
+
+/* ─── START ─── */
+window.addEventListener('load', boot);
+</script>
+</body>
+</html>

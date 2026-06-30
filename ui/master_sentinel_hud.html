@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>🛡️ MASTER SENTINEL HUD | SYNAPSE HUB</title>
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --magenta: #ff00ff;
+            --gold: #ffd700;
+            --bg: #010103;
+            --panel: rgba(0, 20, 40, 0.9);
+        }
+        body {
+            background: var(--bg);
+            color: var(--cyan);
+            font-family: 'Fira Code', monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Scanline effect */
+        body::before {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .hud-container {
+            display: grid;
+            grid-template-columns: 400px 1fr 400px;
+            grid-template-rows: 1fr 300px;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            position: relative;
+            padding: 20px;
+            box-shadow: inset 0 0 30px rgba(0, 242, 255, 0.1);
+        }
+
+        .panel::after {
+            content: "";
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border: 1px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none;
+        }
+
+        /* Central Core */
+        .core-container {
+            grid-column: 2;
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .triarchy-core {
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            border: 2px dashed var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: rotate 60s linear infinite;
+        }
+
+        .inner-core {
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 100px var(--cyan);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse { 
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 150px var(--cyan); }
+        }
+
+        /* Biotic Scan */
+        .biotic-scan {
+            width: 100%;
+            height: 200px;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            margin-top: 20px;
+            position: relative;
+            background: rgba(255, 0, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: var(--magenta);
+            box-shadow: 0 0 15px var(--magenta);
+            animation: scanMove 4s infinite linear;
+        }
+
+        @keyframes scanMove { 0% { top: 0; } 100% { top: 100%; } }
+
+        /* Data Stream */
+        .data-stream {
+            font-size: 10px;
+            color: var(--cyan);
+            opacity: 0.6;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Buttons */
+        .btn-action {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-action:hover {
+            background: var(--cyan);
+            color: var(--bg);
+            box-shadow: 0 0 20px var(--cyan);
+        }
+
+        .btn-danger {
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        .btn-danger:hover {
+            background: var(--magenta);
+            color: white;
+            box-shadow: 0 0 20px var(--magenta);
+        }
+
+        .label {
+            font-size: 10px;
+            color: var(--gold);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Lado Esquerdo: Telemetria Biótica -->
+        <div class="panel">
+            <div class="label">STATUS DO BIORREATOR</div>
+            <div class="value" id="bio-status">ESTÁVEL</div>
+            
+            <div class="label">SINCRONIA BIÓTICA</div>
+            <div class="value">99.98%</div>
+
+            <div class="biotic-scan">
+                <div class="scan-line"></div>
+                <div style="padding: 10px; font-size: 9px;">
+                    AUDITORIA DE CÉLULAS MOONDO...<br>
+                    ID: MOONDO-ALPHA-01<br>
+                    TEMP: 37.2°C [OK]<br>
+                    PH: 7.42 [OK]<br>
+                    O2: 95% [OK]
+                </div>
+            </div>
+
+            <div class="label" style="margin-top:30px;">INFLEXÃO PYM-BATISTA</div>
+            <div id="inflexion-graph" style="height: 100px; display: flex; align-items: flex-end; gap: 2px;">
+                <!-- Barras dinâmicas -->
+            </div>
+        </div>
+
+        <!-- Centro: O Pulsar da Triarquia -->
+        <div class="core-container">
+            <div class="triarchy-core">
+                <div class="inner-core"></div>
+            </div>
+            <div style="margin-top: 40px; text-align: center;">
+                <h1 style="letter-spacing: 15px; margin: 0; font-size: 3rem;">SENTINEL</h1>
+                <p style="color: var(--gold); letter-spacing: 5px;">SISTEMA OPERACIONAL SOBERANO</p>
+            </div>
+        </div>
+
+        <!-- Lado Direito: Controle de Defesa -->
+        <div class="panel">
+            <div class="label">PERÍMETRO DE SEGURANÇA</div>
+            <div class="value" style="color: var(--gold);">AIR-GAPPED</div>
+
+            <button class="btn-action" onclick="alert('ESCANEANDO REDE LOCAL... NENHUMA AMEAÇA DETECTADA.')">Varredura de Perímetro</button>
+            <button class="btn-action" onclick="alert('SINCRONIZANDO VAULT COM GAIA DR3...')">Sincronizar Gaia</button>
+            <button class="btn-action btn-danger" onclick="triggerPanic()">ATIVAR PROTOCOLO CARRASCO</button>
+
+            <div class="label" style="margin-top:40px;">FLUXO LÓGICO DA TRIARQUIA</div>
+            <div class="data-stream" id="stream">
+                <!-- Log em tempo real -->
+            </div>
+        </div>
+
+        <!-- Rodapé: Logs do Sistema -->
+        <div class="panel" style="grid-column: 1 / 4;">
+            <div id="footer-log" style="display: flex; gap: 50px; font-size: 11px;">
+                <div>CPU: <span id="cpu">12%</span></div>
+                <div>RAM: <span id="ram">4.2GB</span></div>
+                <div>NET: <span style="color: var(--magenta);">OFFLINE</span></div>
+                <div>K_B: 852.27</div>
+                <div>LOC: -22.7093, -47.6366 (ESALQ)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stream = document.getElementById('stream');
+        const logs = [
+            "[OK] Alpha Daemon processando...",
+            "[OK] Beta Lâmina protegendo IP...",
+            "[OK] Gamma Oráculo prevendo rotas...",
+            "[SYNC] Pym Particles estáveis.",
+            "[AUDIT] Vault SHA-256 validado.",
+            "[MGET] Curvatura estável."
+        ];
+
+        setInterval(() => {
+            const line = document.createElement('div');
+            line.textContent = `> ${logs[Math.floor(Math.random() * logs.length)]}`;
+            stream.prepend(line);
+            if(stream.childNodes.length > 15) stream.removeChild(stream.lastChild);
+            
+            document.getElementById('cpu').innerText = (10 + Math.random() * 5).toFixed(1) + "%";
+        }, 800);
+
+        // Gráfico dinâmico
+        const graph = document.getElementById('inflexion-graph');
+        for(let i=0; i<40; i++) {
+            const bar = document.createElement('div');
+            bar.style.width = "8px";
+            bar.style.background = "var(--cyan)";
+            bar.style.height = (20 + Math.random() * 80) + "%";
+            graph.appendChild(bar);
+        }
+
+        setInterval(() => {
+            const bars = graph.childNodes;
+            bars.forEach(b => {
+                if(b.style) b.style.height = (20 + Math.random() * 80) + "%";
+            });
+        }, 500);
+
+        function triggerPanic() {
+            document.body.style.background = "#300";
+            alert("PROTOCOLO CARRASCO ATIVADO: TODOS OS REMOTOS DESCONECTADOS. BOMBAS LÓGICAS ARMADAS.");
+            setTimeout(() => document.body.style.background = "var(--bg)", 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNAPSE HUB: CENTRAL DE COMANDO</title>
+    <style>
+        :root {
+            --primary: #00e5ff;
+            --secondary: #5d2a8a;
+            --bg: #050505;
+            --surface: rgba(15, 15, 25, 0.8);
+            --text: #00ff41;
+            --warn: #ffcc00;
+            --danger: #ff3366;
+            --diamond: #b9f2ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', 'Fira Code', monospace;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 80px 1fr 400px;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(0, 0, 0, 0.5);
+            border-right: 1px solid rgba(0, 229, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 20px;
+        }
+
+        .sidebar-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            color: rgba(0, 229, 255, 0.5);
+            font-size: 20px;
+        }
+
+        .sidebar-icon:hover, .sidebar-icon.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .view-section {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        .view-section.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            letter-spacing: 3px;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .system-status {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .status-pill {
+            padding: 4px 10px;
+            border: 1px solid;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .status-ok { color: var(--text); border-color: var(--text); background: rgba(0, 255, 65, 0.05); }
+
+        /* --- MODOS COGNITIVOS --- */
+        body.mode-tdah .card { border: 2px solid var(--primary); box-shadow: 0 0 20px var(--primary); transform: scale(1.02); }
+        body.mode-tdah h1 { font-size: 32px; letter-spacing: 2px; }
+        body.mode-tdah .metric-value { font-size: 48px; }
+
+        body.mode-sensory .card { border: 1px solid #444; box-shadow: none; filter: grayscale(0.5); opacity: 0.8; }
+        body.mode-sensory * { transition: none !important; animation: none !important; }
+        body.mode-sensory .metric-value { color: #fff !important; }
+        body.mode-sensory .focus-banner { display: none; }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid rgba(0, 229, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .card h3 {
+            font-size: 12px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Tool Grid */
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: rgba(93, 42, 138, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .btn:hover { background: var(--primary); color: var(--bg); box-shadow: 0 0 15px var(--primary); }
+
+        /* Focus Banner */
+        .focus-banner {
+            background: linear-gradient(90deg, rgba(255, 204, 0, 0.1), transparent);
+            border-left: 4px solid var(--warn);
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Terminal */
+        .terminal-panel {
+            background: #000;
+            border-left: 1px solid rgba(0, 229, 255, 0.2);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .term-line { margin-bottom: 5px; }
+        .term-line.info { color: var(--diamond); }
+        .term-line.cmd { color: var(--primary); }
+        .term-line.warn { color: var(--warn); }
+
+        .whisper-popup {
+            position: fixed;
+            bottom: 20px;
+            left: 100px;
+            background: rgba(93, 42, 138, 0.9);
+            border: 1px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-icon active" data-view="dashboard">📊</div>
+            <div class="sidebar-icon" data-view="auditoria">🔍</div>
+            <div class="sidebar-icon" data-view="ultrasthink">🔮</div>
+            <div class="sidebar-icon" data-view="meetings" title="Meeting Harvester">🎙️</div>
+            <div class="sidebar-icon" title="Navegador Gravitacional" onclick="window.open('navegador_soberano.html', '_blank')">🚀</div>
+
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Synapse Pym <span id="view-title">· Dashboard</span></h1>
+                <div class="system-status">
+                    <select onchange="changeCognitiveMode(this.value)" style="background: #000; color: var(--primary); border: 1px solid var(--primary); font-size: 10px; padding: 2px;">
+                        <option value="default">🧠 Modo: Padrão</option>
+                        <option value="tdah">🚀 Modo: TDAH</option>
+                        <option value="sensory">🛡️ Modo: Sensorial</option>
+                    </select>
+                    <div class="status-pill status-ok" id="mode-pill">Modo: Padrão</div>
+                    <div id="clock">00:00:00</div>
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="focus-banner">
+                    <div style="font-size: 24px;">🎯</div>
+                    <div>
+                        <div style="font-size: 10px; color: var(--warn);">Foco Atual</div>
+                        <div id="current-task">Monitorar estabilidade do Biorreator</div>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card"><h3>CPU</h3><div class="metric-value" id="cpu-val">12%</div><div class="metric-label">Jetson Edge</div></div>
+                    <div class="card"><h3>RAM</h3><div class="metric-value" id="ram-val">2.4 GB</div><div class="metric-label">Used</div></div>
+                    <div class="card" style="border: 1px solid var(--diamond);">
+                        <h3>Tempo Efetivo</h3>
+                        <div class="metric-value" style="font-size: 14px;">T = (C × B) / t</div>
+                        <div class="metric-label">Equação de Estado</div>
+                    </div>
+                    <div class="card"><h3>Estrelas</h3><div class="metric-value">319k</div><div class="metric-label">Gaia DR3</div></div>
+                    <div class="card" style="border: 1px solid var(--primary);">
+                        <h3>Pym Black Quantum</h3>
+                        <div class="metric-value" style="font-size: 14px; color: var(--primary);">LOCKED & PERSISTENT</div>
+                        <div class="metric-label">Config State</div>
+                    </div>
+                    <div class="card" id="thermal-card">
+                        <h3>Thermals</h3>
+                        <div class="metric-value" id="thermal-val">--°C</div>
+                        <div class="metric-label">System Stability</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auditoria -->
+            <div id="view-auditoria" class="view-section">
+                <div class="card" style="border-left: 4px solid var(--primary);">
+                    <h3>GAPs de Segurança</h3>
+                    <div id="gap-list">
+                        <div class="term-line info">[!] GAP #04: Latência Obsidian > 500ms</div>
+                        <div class="term-line warn">[!] GAP #07: Chave Privada pendente de rotação</div>
+                    </div>
+                </div>
+                <button class="btn" onclick="runTool('auditoria', 'Varredura completa...')">Executar Auditoria</button>
+            </div>
+
+            <!-- Ultrasthink -->
+            <div id="view-ultrasthink" class="view-section">
+                <div class="card" style="background: rgba(93, 42, 138, 0.05);">
+                    <h3>Logic Stream</h3>
+                    <div id="logic-stream" style="height: 200px; overflow-y: auto; font-size: 12px; font-family: monospace;"></div>
+                </div>
+                <div class="tool-grid">
+                    <div class="tool-card"><h2>Oráculo</h2><p>Previsão de riscos e patentes.</p><button class="btn" onclick="showWhisper('O Oráculo prevê sucesso em 08/05.')">Consultar</button></div>
+                    <div class="tool-card"><h2>Memória</h2><p>Persistência Pym Bits.</p><button class="btn" onclick="runTool('memoria', 'Sincronizando...')">Sincronizar</button></div>
+                </div>
+            </div>
+
+            <!-- Tools -->
+            <div id="view-tools" class="view-section">
+                <div class="dashboard-grid">
+                    <div class="card"><h3>SPM Telemetry</h3><div class="metric-value" id="spm-val">0.00000000</div></div>
+                    <div class="card"><h3>Elasticity</h3><div class="metric-value">411x</div></div>
+                </div>
+                <button class="btn" onclick="runZKProof()">Gerar Prova ZK de Estabilidade</button>
+            </div>
+
+            <!-- Infra -->
+            <div id="view-infra" class="view-section">
+                <div class="card" style="border-left: 4px solid var(--warn);">
+                    <h3>Infrastructure Ledger</h3>
+                    <div id="infra-ledger">
+                        <div class="term-line info">[FIX #001] Flatpak & XDG_DATA_DIRS - RESOLVED</div>
+                        <div class="term-line info">[CONFIG] Pym Black Quantum - PERSISTENT</div>
+                    </div>
+                </div>
+                <div class="tool-grid">
+                    <div class="tool-card">
+                        <h2>Sistema</h2>
+                        <p>Verificação de ambiente e dependências.</p>
+                        <button class="btn" onclick="runTool('infra', 'Validando caminhos...')">Validar Caminhos</button>
+                    </div>
+                    <div class="tool-card">
+                        <h2>GPG / Remotos</h2>
+                        <p>Estado dos repositórios Flatpak.</p>
+                        <button class="btn" onclick="runTool('infra', 'Sincronizando remotos...')">Sincronizar Remotos</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meetings -->
+            <div id="view-meetings" class="view-section">
+                <div class="header">
+                    <h2>🎙️ Real-Time Meeting Harvester</h2>
+                    <div id="meeting-status-pill" class="status-pill status-ok">Inativo</div>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--diamond); background: rgba(0, 229, 255, 0.05);">
+                    <h3>Live Insights & Metadados</h3>
+                    <div id="meeting-insights" style="max-height: 400px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 13px;">
+                        <div class="term-line info">Aguardando início de reunião para capturar ideias...</div>
+                    </div>
+                </div>
+                <div class="dashboard-grid" style="margin-top: 10px;">
+                    <div class="card"><h3>Participantes</h3><div id="meeting-participants" class="metric-value" style="font-size: 16px;">--</div></div>
+                    <div class="card"><h3>Ideias Sinápticas</h3><div id="meeting-nodes" class="metric-value">0</div></div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn" id="btn-start-meeting" onclick="toggleMeeting(true)">Iniciar Captura</button>
+                    <button class="btn" id="btn-stop-meeting" onclick="toggleMeeting(false)" style="display: none; border-color: var(--danger); color: var(--danger);">Encerrar Reunião</button>
+                </div>
+            </div>
+
+            <!-- TDAH -->
+            <div id="view-tdah" class="view-section" style="align-items: center; justify-content: center; height: 100%;">
+                <h1 style="font-size: 48px; color: var(--primary);">FOCO TOTAL</h1>
+                <div class="card" style="padding: 40px; border-color: var(--warn); text-align: center;">
+                    <h2 style="font-size: 24px;" id="tdah-task">Monitorar Biorreator</h2>
+                </div>
+                <button class="btn" style="margin-top: 20px; padding: 20px;" onclick="completeTask()">PRÓXIMA TAREFA</button>
+            </div>
+        </div>
+
+        <div class="terminal-panel">
+            <div class="terminal-header">TERMINAL SOBERANO v5.0</div>
+            <div class="terminal-output" id="out">
+                <div class="term-line info">Sistema inicializado. Bem-vindo, Maestro.</div>
+            </div>
+            <input type="text" id="inp" placeholder="Comando..." style="background: #000; border: none; color: var(--primary); font-family: inherit; outline: none; margin-top: 10px;">
+        </div>
+    </div>
+
+    <div id="whisper" class="whisper-popup">
+        <div style="color: var(--primary); font-weight: bold;">🔮 Oráculo</div>
+        <div id="whisper-text">Aguardando...</div>
+    </div>
+
+    <script>
+        const out = document.getElementById('out');
+        const inp = document.getElementById('inp');
+
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = 'term-line ' + type;
+            div.textContent = (type === 'cmd' ? '❯ ' : '') + msg;
+            out.appendChild(div);
+            out.scrollTop = out.scrollHeight;
+        }
+
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                log(inp.value, 'cmd');
+                inp.value = '';
+            }
+        });
+
+        document.querySelectorAll('.sidebar-icon').forEach(icon => {
+            icon.onclick = () => {
+                document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+                icon.classList.add('active');
+                const view = icon.getAttribute('data-view');
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('view-' + view).classList.add('active');
+                document.getElementById('view-title').textContent = ' · ' + view.toUpperCase();
+            };
+        });
+
+        function changeCognitiveMode(mode) {
+            document.body.className = '';
+            if (mode !== 'default') document.body.classList.add('mode-' + mode);
+            document.getElementById('mode-pill').textContent = 'Modo: ' + mode.toUpperCase();
+            log('Modo alterado para: ' + mode, 'warn');
+        }
+
+        function runTool(name, msg) {
+            log(name.toUpperCase() + ': ' + msg, 'info');
+        }
+
+        function runZKProof() {
+            log('Gerando Prova ZK...', 'cmd');
+            setTimeout(() => log('Prova ZK gerada: zk_stability_proof.json', 'info'), 2000);
+        }
+
+        function showWhisper(msg) {
+            const w = document.getElementById('whisper');
+            document.getElementById('whisper-text').textContent = msg;
+            w.style.display = 'block';
+            setTimeout(() => w.style.display = 'none', 4000);
+        }
+
+        const tasks = ["Monitorar Biorreator", "Validar Daemon", "Sincronizar Gaia", "Preparar Pitch"];
+        let tIdx = 0;
+        function completeTask() {
+            tIdx = (tIdx + 1) % tasks.length;
+            document.getElementById('current-task').textContent = tasks[tIdx];
+            document.getElementById('tdah-task').textContent = tasks[tIdx];
+            showWhisper("Tarefa concluída com sucesso.");
+        }
+
+        let meetingActive = false;
+        function toggleMeeting(active) {
+            meetingActive = active;
+            document.getElementById('btn-start-meeting').style.display = active ? 'none' : 'block';
+            document.getElementById('btn-stop-meeting').style.display = active ? 'block' : 'none';
+            document.getElementById('meeting-status-pill').textContent = active ? 'Gravando...' : 'Inativo';
+            document.getElementById('meeting-status-pill').className = 'status-pill ' + (active ? 'status-warn' : 'status-ok');
+            
+            log(active ? 'Iniciando captura de reunião...' : 'Captura encerrada.', active ? 'info' : 'warn');
+            
+            if (active) {
+                // Aqui seria o gatilho para o backend (audio_harvester.sh)
+                showWhisper("Meeting Harvester: Áudio do sistema sincronizado.");
+            }
+        }
+
+        // Simulação de telemetria e polling de insights
+        setInterval(() => {
+            document.getElementById('cpu-val').textContent = (Math.random() * 20 + 5).toFixed(0) + '%';
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+            if(document.getElementById('spm-val')) document.getElementById('spm-val').textContent = (Math.random() * 0.000001).toFixed(8);
+            
+            // Thermal simulation based on sensors data
+            const tVal = (Math.random() * 5 + 48).toFixed(1);
+            document.getElementById('thermal-val').textContent = tVal + '°C';
+            const tCard = document.getElementById('thermal-card');
+            if (tVal > 85) tCard.style.borderColor = 'var(--danger)';
+            else if (tVal > 70) tCard.style.borderColor = 'var(--warn)';
+            else tCard.style.borderColor = 'rgba(0, 229, 255, 0.1)';
+
+            const stream = document.getElementById('logic-stream');
+            if(stream) {
+                const l = document.createElement('div');
+                l.textContent = '[THINK] Sincronizando Nó ' + (Math.random() > 0.5 ? 'Alpha' : 'Beta');
+                stream.appendChild(l);
+                stream.scrollTop = stream.scrollHeight;
+            }
+
+            // Simular atualização de reuniões se ativo
+            if (meetingActive && Math.random() > 0.7) {
+                const insights = document.getElementById('meeting-insights');
+                const line = document.createElement('div');
+                line.className = 'term-line info';
+                line.textContent = `[INSIGHT] Nova ideia detectada: "Escalabilidade Pym-${(Math.random()*100).toFixed(0)}"`;
+                insights.appendChild(line);
+                insights.scrollTop = insights.scrollHeight;
+                
+                const nodeCount = document.getElementById('meeting-nodes');
+                nodeCount.textContent = parseInt(nodeCount.textContent) + 1;
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

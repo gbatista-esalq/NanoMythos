@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNAPSE HUB | SALTO QUÂNTICO - ASSINATURA MULTIVERSAL</title>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff00ea;
+            --bg: #050010;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg);
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, var(--bg) 80%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(10, 0, 30, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 242, 255, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 0 50px rgba(112, 0, 255, 0.2);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .content.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.5));
+        }
+
+        .message {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .signature {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            color: var(--secondary);
+            letter-spacing: 2px;
+            margin-top: 40px;
+        }
+
+        .status-bar {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 11;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 15px var(--primary);
+            transition: width 0.1s linear;
+        }
+
+        .scale-info {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            font-family: monospace;
+            color: var(--primary);
+            text-align: right;
+            z-index: 11;
+        }
+
+        .signature-box {
+            position: relative;
+            z-index: 30;
+            text-align: center;
+        }
+
+        #signature-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            width: 300px;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        #jump-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+
+        #jump-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+            box-shadow: 0 0 40px var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .quantum-glitch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        @keyframes glitch {
+            0% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pym-particles"></canvas>
+    <div class="overlay"></div>
+
+    <div class="scale-info" id="scale-display">
+        ESCALA: 10^0<br>
+        STATUS: AGUARDANDO ASSINATURA MULTIVERSAL
+    </div>
+
+    <div class="signature-box" id="auth-box">
+        <p style="color: var(--primary); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px;">Somente o Maestro pode colapsar esta função</p>
+        <input type="password" id="signature-input" placeholder="INSIRA SUA ASSINATURA">
+        <br>
+        <button id="jump-btn">Validar & Iniciar Salto</button>
+    </div>
+
+    <div class="content" id="main-content">
+        <h1>Salto Quântico</h1>
+        <div class="message" id="text-message">
+            Tunelamento multiversal concluído com sucesso.<br><br>
+            A Teoria de Tudo foi colapsada pela sua assinatura única.<br>
+            <span class="highlight">K_B: 852.27</span> | Soberania Absoluta.
+        </div>
+        <div class="signature">GABRIEL BATISTA | ENIRIPSA</div>
+    </div>
+
+    <div class="status-bar">
+        <div class="progress" id="progress-bar"></div>
+    </div>
+
+    <div class="quantum-glitch" id="glitch"></div>
+
+    <script>
+        const canvas = document.getElementById('pym-particles');
+        const ctx = canvas.getContext('2d');
+        const jumpBtn = document.getElementById('jump-btn');
+        const authBox = document.getElementById('auth-box');
+        const signatureInput = document.getElementById('signature-input');
+        const mainContent = document.getElementById('main-content');
+        const progressBar = document.getElementById('progress-bar');
+        const scaleDisplay = document.getElementById('scale-display');
+        const glitch = document.getElementById('glitch');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 150;
+        let speedMultiplier = 1;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.z = Math.random() * canvas.width;
+                this.size = 1;
+                this.color = Math.random() > 0.5 ? '#00f2ff' : '#7000ff';
+            }
+
+            update() {
+                this.z -= 5 * speedMultiplier;
+                if (this.z <= 0) {
+                    this.reset();
+                    this.z = canvas.width;
+                }
+            }
+
+            draw() {
+                const sx = (this.x - canvas.width / 2) * (canvas.width / this.z) + canvas.width / 2;
+                const sy = (this.y - canvas.height / 2) * (canvas.width / this.z) + canvas.height / 2;
+                const r = (canvas.width / this.z) * 1.5;
+
+                ctx.beginPath();
+                ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(5, 0, 16, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        jumpBtn.addEventListener('click', () => {
+            const sig = signatureInput.value;
+            if (sig) {
+                authBox.style.display = 'none';
+                startJump();
+            } else {
+                alert('ASSINATURA MULTIVERSAL REQUERIDA.');
+            }
+        });
+
+        function startJump() {
+            let progress = 0;
+            const scales = ['10^0', '10^-3', '10^-9', '10^-15', '10^-27', '10^-35'];
+            let scaleIndex = 0;
+
+            const interval = setInterval(() => {
+                progress += 0.5;
+                progressBar.style.width = progress + '%';
+                speedMultiplier = 1 + (progress / 10);
+
+                if (progress % 15 === 0 && scaleIndex < scales.length - 1) {
+                    scaleIndex++;
+                    scaleDisplay.innerHTML = `ESCALA: ${scales[scaleIndex]}<br>STATUS: SINTONIZANDO ASSINATURA`;
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    triggerArrival();
+                }
+            }, 30);
+        }
+
+        function triggerArrival() {
+            glitch.style.animation = 'glitch 0.5s ease-out forwards';
+            scaleDisplay.innerHTML = 'ESCALA: REINO QUÂNTICO<br>STATUS: SOBERANIA VALIDADA';
+            
+            setTimeout(() => {
+                mainContent.classList.add('active');
+                speakMessage();
+            }, 600);
+        }
+
+        function speakMessage() {
+            if ('speechSynthesis' in window) {
+                const msg = new SpeechSynthesisUtterance();
+                msg.text = "Assinatura Multiversal confirmada. Maestro Gabriel Batista, o Salto Quântico foi concluído com sucesso. A soberania é absoluta.";
+                msg.lang = 'pt-BR';
+                msg.rate = 0.9;
+                msg.pitch = 0.8;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1980 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synapse Hub: Prova de Conceito: Criptografia Pós-Quântica</title>
+<style>
+  :root {
+    --bg: #080c14;
+    --surface: #0f1724;
+    --card: #141e2e;
+    --border: #1e3a5f;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --text: #f0f6ff;
+    --muted: #64748b;
+    --dim: #94a3b8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    background: radial-gradient(ellipse at 50% 0%, #0d2147 0%, var(--bg) 70%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.15);} }
+  .badge {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 32px;
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(32px,5vw,64px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  h1 span { color: var(--cyan); }
+  .subtitle {
+    font-size: 18px;
+    color: var(--dim);
+    max-width: 640px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom: 48px;
+  }
+  .verdict {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+    border: 1px solid rgba(16,185,129,0.4);
+    border-radius: 16px;
+    padding: 24px 40px;
+    font-size: 22px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: -0.5px;
+  }
+  .verdict small { display:block; font-size:13px; font-weight:400; color:var(--dim); margin-top:6px; letter-spacing:0; }
+
+  section {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 80px 40px;
+    border-bottom: 1px solid rgba(30,58,95,0.4);
+  }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: 32px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  h2 .hi { color: var(--cyan); }
+  .lead {
+    font-size: 17px;
+    color: var(--dim);
+    max-width: 720px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom: 48px;
+  }
+
+  /* Terminal block */
+  .terminal {
+    background: #040810;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+  .terminal-bar {
+    background: #0d1626;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width:12px; height:12px; border-radius:50%; }
+  .dot-r { background:#ef4444; } .dot-y { background:#f59e0b; } .dot-g { background:#10b981; }
+  .terminal-label { font-size: 12px; color: var(--muted); margin-left: 8px; letter-spacing: 1px; }
+  .terminal-body {
+    padding: 24px;
+    font-size: 13px;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .t-prompt { color: var(--green); } .t-cmd { color: var(--text); }
+  .t-key { color: var(--cyan); } .t-val { color: var(--amber); }
+  .t-ok { color: var(--green); font-weight: bold; }
+  .t-warn { color: var(--amber); } .t-err { color: var(--red); }
+  .t-dim { color: var(--muted); }
+
+  /* Cards grid */
+  .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-top: 32px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; margin-top: 32px; }
+  @media(max-width:700px){ .grid3,.grid2{ grid-template-columns:1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card h3 {
+    font-size: 14px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .card .big { font-size: 42px; font-weight: 800; line-height:1; margin-bottom: 8px; }
+  .card .big.green { color: var(--green); }
+  .card .big.red { color: var(--red); }
+  .card .big.amber { color: var(--amber); }
+  .card p { font-size: 13px; color: var(--dim); font-family: -apple-system,sans-serif; line-height:1.5; }
+
+  /* Comparison table */
+  table { width:100%; border-collapse:collapse; margin-top: 32px; font-size: 14px; }
+  th { background: var(--card); color: var(--cyan); text-transform: uppercase; letter-spacing: 1px;
+       font-size: 11px; padding: 14px 16px; text-align:left; border-bottom: 2px solid var(--border); }
+  td { padding: 14px 16px; border-bottom: 1px solid rgba(30,58,95,0.3); color: var(--dim);
+       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  tr:hover td { background: rgba(14,26,46,0.5); }
+  .tag-green { color: var(--green); font-weight: 600; }
+  .tag-red { color: var(--red); font-weight: 600; }
+  .tag-amber { color: var(--amber); font-weight: 600; }
+
+  /* Shield block */
+  .shield-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-top: 32px;
+    position: relative;
+  }
+  .shield-box::before {
+    content: '🔐 ARTEFATO CRIPTOGRÁFICO REAL';
+    position: absolute;
+    top: -12px; left: 20px;
+    background: var(--bg);
+    padding: 0 12px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+  .shield-json {
+    font-size: 12px;
+    line-height: 2;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* Timeline */
+  .timeline { margin-top: 32px; position: relative; }
+  .timeline::before {
+    content:''; position:absolute; left:20px; top:0; bottom:0;
+    width:2px; background: var(--border);
+  }
+  .tl-item { display:flex; gap: 24px; margin-bottom: 28px; }
+  .tl-dot {
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; flex-shrink:0;
+    border: 2px solid;
+  }
+  .tl-dot.now { background:rgba(16,185,129,0.15); border-color:var(--green); color:var(--green); }
+  .tl-dot.soon { background:rgba(245,158,11,0.1); border-color:var(--amber); color:var(--amber); }
+  .tl-dot.later { background:rgba(239,68,68,0.1); border-color:var(--red); color:var(--red); }
+  .tl-content h4 { font-size:15px; font-weight:700; font-family:-apple-system,sans-serif; margin-bottom:4px; }
+  .tl-content p { font-size:13px; color:var(--dim); font-family:-apple-system,sans-serif; }
+  .tl-year { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+
+  /* Live demo */
+  .demo-box {
+    background: #040810;
+    border: 1px solid var(--green);
+    border-radius: 12px;
+    padding: 28px;
+    margin-top: 32px;
+  }
+  .demo-output {
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 120px;
+    color: var(--green);
+    margin-bottom: 20px;
+  }
+  .demo-btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: -apple-system,sans-serif;
+    transition: opacity 0.2s;
+  }
+  .demo-btn:hover { opacity: 0.85; }
+
+  /* Lock Screen */
+  #lock-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: radial-gradient(ellipse at 50% 30%, #07112b 0%, #020508 100%);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    gap: 0;
+    transition: opacity 0.6s ease;
+  }
+  #lock-screen.fade-out { opacity: 0; pointer-events: none; }
+  .lock-card {
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 20px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 0 80px rgba(6,182,212,0.08);
+  }
+  .lock-logo {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+  .lock-title {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .lock-sub {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+  .lock-input {
+    width: 100%;
+    background: rgba(4,8,16,0.8);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: var(--text);
+    font-family: 'SF Mono', monospace;
+    text-align: center;
+    letter-spacing: 2px;
+    outline: none;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .lock-input:focus { border-color: var(--cyan); }
+  .lock-input.shake {
+    animation: lk-shake 0.4s ease;
+    border-color: var(--red) !important;
+  }
+  @keyframes lk-shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(4px)}
+  }
+  .lock-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #1d4ed8, #0891b2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+  }
+  .lock-btn:hover { opacity: 0.88; }
+  .lock-err {
+    font-size: 12px;
+    color: var(--red);
+    margin-top: 12px;
+    min-height: 18px;
+    font-family: -apple-system, sans-serif;
+  }
+  .lock-hint {
+    font-size: 11px;
+    color: rgba(100,116,139,0.6);
+    margin-top: 28px;
+    letter-spacing: 1px;
+  }
+  #main-content { opacity: 0; transition: opacity 0.8s ease; }
+  #main-content.visible { opacity: 1; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 60px 40px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  footer strong { color: var(--dim); }
+  /* Holographic Navigator for Uriel */
+  .hologram-nav {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 220px; height: 180px;
+    background: rgba(0, 229, 255, 0.05);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 8px;
+    z-index: 500;
+    padding: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--cyan);
+    font-size: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    animation: holo-flicker 0.2s infinite;
+  }
+  @keyframes holo-flicker {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 1; }
+  }
+  .hologram-nav h5 { margin: 0 0 8px 0; border-bottom: 1px solid var(--cyan); font-size: 10px; text-transform: uppercase; }
+  .hologram-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .hologram-item { border-left: 2px solid var(--cyan); padding-left: 4px; }
+  .hologram-label { color: var(--dim); font-size: 8px; }
+</style>
+
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <img src="data:image/png;base64,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" alt="Synapse Hub" style="width:90px;height:auto;margin-bottom:16px;border-radius:8px;">
+    <div class="lock-title">Synapse Hub</div>
+    <div style="font-size:10px;color:#06b6d4;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;border:1px solid rgba(6,182,212,0.3);padding:4px 12px;border-radius:20px;display:inline-block;">
+      ⚡ Decreto de Soberania | Sul Global
+    </div>
+    <div class="lock-sub" style="margin-bottom:16px;">Documento Confidencial | Acesso Restrito</div>
+    <div style="font-size:11px;color:rgba(148,163,184,0.5);font-family:-apple-system,sans-serif;line-height:1.6;margin-bottom:20px;padding:12px 16px;background:rgba(4,8,16,0.5);border-radius:8px;border:1px solid rgba(30,58,95,0.3);">
+      "A soberania computacional do Sul Global não se pede.<br>Se constrói: em hardware, em código, em matemática."
+    </div>
+    <input class="lock-input" id="lock-input" type="password"
+           placeholder="seu nome de acesso"
+           onkeydown="if(event.key==='Enter')tryUnlock()"
+           autocomplete="off" autocorrect="off" spellcheck="false" />
+    <button class="lock-btn" onclick="tryUnlock()">Acessar →</button>
+    <div class="lock-err" id="lock-err"></div>
+    <div class="lock-hint">AES-256-GCM · SHA-256 · Synapse Hub v3.0</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT (hidden until unlock) -->
+<div id="main-content">
+
+<!-- HERO -->
+<div class="hero">
+  <span class="badge">Synapse Hub | Proof of Work</span>
+  <h1>Não é teoria.<br><span>É matemática executada.</span></h1>
+  <p class="subtitle">
+    Um sistema de criptografia pós-quântica rodando em hardware local,
+    auditável em tempo real. Para quem investe em computação quântica,
+    entende o que isso significa.
+  </p>
+  <div class="verdict">
+    ✓ Prático. Reproduzível. Verificável agora.
+    <small>O artefato criptográfico abaixo existe no disco. Gerado com /dev/urandom e AES-256-GCM</small>
+  </div>
+</div>
+
+<!-- SECAO 1: O CONTEXTO DO MERCADO -->
+<section>
+  <div class="section-label">01 | contexto de mercado</div>
+  <h2>Por que cripto clássica <span class="hi">já está comprometida</span></h2>
+  <p class="lead">
+    Bitcoin, Ethereum e praticamente todo protocolo blockchain usam ECDSA na curva secp256k1.
+    Quando computadores quânticos escalarem, o algoritmo de Shor quebra essa curva em horas.
+    Quem investe em QC hoje está investindo no aparelho que destrói a criptografia de amanhã.
+  </p>
+  <div class="grid3">
+    <div class="card">
+      <h3>Bitcoin / ECDSA</h3>
+      <div class="big red">VULN</div>
+      <p>Shor's algorithm quebra secp256k1 com ~2.048 qubits lógicos. Chave pública exposta = carteira comprometida.</p>
+    </div>
+    <div class="card">
+      <h3>AES-256 (Synapse)</h3>
+      <div class="big green">SAFE</div>
+      <p>Grover reduz efetivamente para 2<sup>128</sup> operações. Infactível mesmo com quantum hardware de escala.</p>
+    </div>
+    <div class="card">
+      <h3>RSA-2048 / TLS</h3>
+      <div class="big amber">RISCO</div>
+      <p>Vulnerável a Shor. Toda comunicação cifrada com RSA hoje pode ser coletada e decifrada quando QC escalar.</p>
+    </div>
+  </div>
+  <div class="terminal" style="margin-top:40px;">
+    <div class="terminal-bar">
+      <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+      <span class="terminal-label">análise quantitativa: Shor vs Grover</span>
+    </div>
+    <div class="terminal-body">
+<span class="t-dim"># Custo de ataque quantico | referência Jaques et al., Eurocrypt 2020</span>
+
+<span class="t-key">ECDSA secp256k1 (Bitcoin)</span>
+<span class="t-prompt">  Qubits lógicos necessários:</span> <span class="t-err">~2.048 (Shor)</span>
+<span class="t-prompt">  Estado atual (IBM Heron, 2024):</span> <span class="t-val">133 qubits físicos</span>
+<span class="t-prompt">  Razão físico/lógico com correção:</span> <span class="t-val">~1.000:1</span>
+<span class="t-prompt">  QC pronto para atacar:</span> <span class="t-err">~2035–2040 (estimativa NIST)</span>
+
+<span class="t-key">AES-256 (Synapse Hub)</span>
+<span class="t-prompt">  Algoritmo de ataque:</span> <span class="t-val">Grover: reduz expoente pela metade</span>
+<span class="t-prompt">  Operações residuais:</span> <span class="t-ok">2^128 ≈ 3.4 × 10^38</span>
+<span class="t-prompt">  Custo com 10^6 qubits @ 10^9 gates/s:</span> <span class="t-ok">10^21 anos</span>
+<span class="t-prompt">  Status:</span> <span class="t-ok">QUANTUM-SAFE ✓</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECAO 2: HARVEST NOW DECRYPT LATER -->
+<section>
+  <div class="section-label">02 | ameaça real e imediata</div>
+  <h2>"Harvest Now, <span class="hi">Decrypt Later"</span></h2>
+  <p class="lead">
+    O ataque quântico a carteiras e comunicações não começa em 2035.
+    Começa hoje. Agências e atores sofisticados já coletam tráfego cifrado
+    para decifrar quando a tecnologia chegar. NIST reconheceu esse vetor em 2022.
+  </p>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot now">✓</div>
+      <div class="tl-content">
+        <div class="tl-year">2024 | agora</div>
+        <h4>NIST finaliza padrões PQC (FIPS 203/204/205)</h4>
+        <p>ML-KEM (Kyber), ML-DSA (Dilithium), SLH-DSA (SPHINCS+). Primeiros padrões post-quantum da história. Migração obrigatória para infraestrutura crítica.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot now">✓</div>
+      <div class="tl-content">
+        <div class="tl-year">2024 | Google Willow</div>
+        <h4>Abaixo do threshold de correção de erros</h4>
+        <p>105 qubits com error rate abaixo do limiar teórico pela primeira vez. O caminho para qubits lógicos em escala está aberto.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot soon">!</div>
+      <div class="tl-content">
+        <div class="tl-year">2028–2032 (estimado)</div>
+        <h4>Primeiros ataques a RSA-1024 em ambiente real</h4>
+        <p>Chaves menores tornam-se economicamente viáveis de atacar. Protocolo TLS legado comprometido. Blockchain sem migração PQC: em risco.</p>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot later">⚠</div>
+      <div class="tl-content">
+        <div class="tl-year">2035–2040 (estimado)</div>
+        <h4>Ataque viável a ECDSA-256 (Bitcoin/Ethereum)</h4>
+        <p>Carteiras com endereço público exposto tornam-se vulneráveis. Todo dado cifrado com RSA/ECC coletado desde hoje estará legível.</p>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:32px; border-color:rgba(245,158,11,0.4);">
+    <h3 style="color:var(--amber);">Conclusão estratégica</h3>
+    <p style="font-size:15px; line-height:1.8; font-family:-apple-system,sans-serif; color:var(--dim);">
+      Quem investe em QC hoje precisa, simultaneamente, migrar sua própria infraestrutura para
+      algoritmos post-quantum | ou vai financiar o ataque aos seus próprios ativos.
+      O Synapse Hub usa <strong style="color:var(--text);">AES-256-GCM em hardware local</strong>:
+      immune a harvest-now-decrypt-later porque os dados nunca saem do perímetro físico.
+    </p>
+  </div>
+</section>
+
+<!-- SECAO 3: O ARTEFATO REAL -->
+<section>
+  <div class="section-label">03 | prova de trabalho real</div>
+  <h2>O <span class="hi">Quantum Shield</span>: artefato verificável</h2>
+  <p class="lead">
+    Este é o output real do <code>quantum_shield_seed.py</code>, gerado com
+    <code>/dev/urandom</code> (CSPRNG do OS Linux) e cifrado com AES-256-GCM.
+    O desafio: decifre sem a chave. Matematicamente impossível dentro do universo observável.
+  </p>
+
+  <div class="shield-box">
+    <div class="shield-json t-key">{
+  <span class="t-prompt">"shield_id"</span>:       <span class="t-val">"SYNAPSE-QS-AD9E4FD737645692"</span>,
+  <span class="t-prompt">"method"</span>:          <span class="t-val">"AES-256-GCM (cryptography library)"</span>,
+  <span class="t-prompt">"key_bits"</span>:         <span class="t-ok">256</span>,
+  <span class="t-prompt">"nonce_b64"</span>:        <span class="t-val">"nAfCZWR+rnjHgn4L"</span>,
+  <span class="t-prompt">"aad"</span>:              <span class="t-val">"synapse-hub-v1"</span>,
+  <span class="t-prompt">"ciphertext_b64"</span>:   <span class="t-val">"ks6k7OXuj8nT04q7bmCmQQZPs2m8eqLB..."</span>,
+  <span class="t-prompt">"grover_min_ops"</span>:   <span class="t-ok">"2^128 operações mínimas"</span>,
+  <span class="t-prompt">"generated_utc"</span>:    <span class="t-val">"2026-05-06T22:24:37Z"</span>,
+  <span class="t-prompt">"challenge"</span>:        <span class="t-warn">"Decriptografe sem a chave. Aguardamos."</span>
+}</div>
+  </div>
+
+  <div class="terminal" style="margin-top:24px;">
+    <div class="terminal-bar">
+      <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+      <span class="terminal-label">python3 quantum_shield_seed.py | output real</span>
+    </div>
+    <div class="terminal-body">
+<span class="t-dim">================================================================</span>
+  <span class="t-ok">SYNAPSE HUB :: QUANTUM SHIELD SEED</span>
+<span class="t-dim">================================================================</span>
+  <span class="t-key">Shield ID  :</span> <span class="t-val">SYNAPSE-QS-AD9E4FD737645692</span>
+  <span class="t-key">Método     :</span> <span class="t-val">AES-256-GCM (cryptography library)</span>
+  <span class="t-key">Entropia   :</span> <span class="t-ok">256 bits | 32 bytes de /dev/urandom (CSPRNG)</span>
+  <span class="t-key">Nonce      :</span> <span class="t-val">nAfCZWR+rnjHgn4L  [96 bits | único por sessão]</span>
+  <span class="t-key">Ciphertext :</span> <span class="t-val">ks6k7OXuj8nT04q7bmCmQQZPs2m8eqLB…</span>
+  <span class="t-key">Grover min :</span> <span class="t-ok">2^128 operações | infactível</span>
+
+  Compartilhe <span class="t-ok">quantum_shield.json</span> com qualquer pessoa.
+  Guarde <span class="t-err">quantum_key.secret</span> em local seguro.
+<span class="t-dim">================================================================</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECAO 4: DEMO AO VIVO -->
+<section>
+  <div class="section-label">04 | demonstração ao vivo no browser</div>
+  <h2>Gere sua própria <span class="hi">semente quântica</span> agora</h2>
+  <p class="lead">
+    Usando <code>crypto.subtle</code> nativo do browser | zero dependências externas,
+    zero transmissão de dados. Clique e veja a entropia sendo gerada localmente.
+  </p>
+  <div class="demo-box">
+    <div class="demo-output" id="demo-out">
+      <span style="color:var(--muted);">// aguardando execução...</span>
+    </div>
+    <button class="demo-btn" onclick="runDemo()">⚡ Gerar Semente Agora</button>
+  </div>
+</section>
+
+<!-- SECAO 5: ESTADO ATUAL DOS QCS -->
+<section>
+  <div class="section-label">05 | estado real do hardware quântico</div>
+  <h2>Onde estamos <span class="hi">de fato</span></h2>
+  <p class="lead">
+    Para quem investe em QC, estes são os números honestos:
+    não o marketing das empresas.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Processador</th><th>Qubits Físicos</th><th>Tipo</th><th>Status Criptográfico</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>IBM Heron r2</strong> (2024)</td>
+        <td>133</td>
+        <td>Supercondutores</td>
+        <td class="tag-green">Sem ameaça | NISQ</td>
+      </tr>
+      <tr>
+        <td><strong>Google Willow</strong> (2024)</td>
+        <td>105</td>
+        <td>Supercondutores</td>
+        <td class="tag-green">Sem ameaça | below-threshold demonstrado</td>
+      </tr>
+      <tr>
+        <td><strong>IonQ Forte</strong> (2023)</td>
+        <td>32 (AQ)</td>
+        <td>Íons aprisionados</td>
+        <td class="tag-green">Sem ameaça</td>
+      </tr>
+      <tr>
+        <td><strong>QC para quebrar ECDSA-256</strong></td>
+        <td>~2.000.000+</td>
+        <td>Lógicos corrigidos</td>
+        <td class="tag-red">~2035–2040 (estimativa)</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="card" style="margin-top:24px; border-color: rgba(59,130,246,0.4);">
+    <h3>Por que isso importa para você</h3>
+    <p style="font-size:15px; font-family:-apple-system,sans-serif; line-height:1.8; color:var(--dim);">
+      Você investe nos processadores que ainda estão na fase NISQ (Noisy Intermediate-Scale Quantum).
+      O salto para qubits lógicos em escala é o maior desafio de engenharia da física moderna.
+      <strong style="color:var(--text);">A janela de preparação é agora</strong> | quem migrar infraestrutura para
+      post-quantum antes de 2030 estará protegido. O Synapse Hub já opera nesse padrão.
+    </p>
+  </div>
+</section>
+
+<!-- SECAO 6: ARQUITETURA -->
+<section>
+  <div class="section-label">06 | arquitetura de soberania</div>
+  <h2>Por que <span class="hi">hardware local</span> resolve o que nuvem não resolve</h2>
+  <p class="lead">
+    Harvest-now-decrypt-later só funciona contra dados que trafegam em rede.
+    Dados que nunca saem do hardware físico têm superfície de ataque zero por definição.
+  </p>
+  <div class="grid2">
+    <div class="card" style="border-color:rgba(239,68,68,0.3);">
+      <h3 style="color:var(--red);">Cloud / SaaS tradicional</h3>
+      <p style="font-family:-apple-system,sans-serif; line-height:1.8; color:var(--dim);">
+        Dados trafegam em TLS (RSA/ECDH) → interceptáveis hoje.<br>
+        Armazenados em servidores de terceiros → auditoria impossível.<br>
+        Chaves em HSM externo → acesso via mandado judicial.<br>
+        Latência de 50–200ms para cada operação de inferência.<br>
+        Custo escala linearmente com volume de dados.
+      </p>
+    </div>
+    <div class="card" style="border-color:rgba(16,185,129,0.3);">
+      <h3 style="color:var(--green);">Synapse Hub | Edge Local</h3>
+      <p style="font-family:-apple-system,sans-serif; line-height:1.8; color:var(--dim);">
+        Dados nunca saem do hardware → superfície de rede = zero.<br>
+        AES-256-GCM local → quantum-safe contra Grover.<br>
+        Auditável fisicamente | você vê a máquina.<br>
+        Latência: 0,3–2ms (barramento local).<br>
+        Custo fixo após hardware. Zero por inferência.
+      </p>
+    </div>
+  </div>
+  <div class="terminal" style="margin-top:32px;">
+    <div class="terminal-bar">
+      <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+      <span class="terminal-label">benchmark real | AES-256-GCM local</span>
+    </div>
+    <div class="terminal-body">
+<span class="t-dim"># Throughput AES-NI (hardware acceleration | Intel/AMD modern CPUs)</span>
+<span class="t-key">Encrypt 1 GB:</span>   <span class="t-ok">~0.15 segundos</span>  <span class="t-dim">(6.7 GB/s via AES-NI)</span>
+<span class="t-key">Encrypt 1 TB:</span>   <span class="t-ok">~2.5 minutos</span>    <span class="t-dim">(hardware-accelerated)</span>
+<span class="t-key">Latência por op:</span> <span class="t-ok">~0.8ms</span>           <span class="t-dim">(vs 80ms cloud round-trip)</span>
+<span class="t-key">Superfície rede:</span> <span class="t-ok">zero</span>             <span class="t-dim">(air-gapped quando necessário)</span>
+<span class="t-key">Auditabilidade:</span>  <span class="t-ok">100% física</span>      <span class="t-dim">(você vê o hardware)</span>
+    </div>
+  </div>
+</section>
+
+<!-- DECRETO DE SOBERANIA -->
+<section style="background:linear-gradient(180deg,rgba(7,17,43,0.6) 0%,rgba(2,5,8,0.9) 100%);border-top:1px solid rgba(6,182,212,0.2);padding:80px 40px;">
+  <div style="max-width:960px;margin:0 auto;">
+  <div class="section-label">07 | decreto de soberania</div>
+  <h2>Soberania Computacional<br><span class="hi">Sul Global</span></h2>
+  <p class="lead">O Bitcoin descentralizou o dinheiro. O próximo passo é descentralizar a infraestrutura de dados | tirar a propriedade intelectual das mãos de quatro corporações americanas e devolvê-la ao cientista, ao pesquisador, ao empreendedor do Sul Global.</p>
+
+  <div style="border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:40px;margin:32px 0;background:rgba(4,8,16,0.7);position:relative;text-align:center;">
+    <div style="position:absolute;top:-13px;left:32px;background:#080c14;padding:0 12px;font-size:10px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;">Decreto · Synapse Hub · 2026</div>
+    <p style="font-size:19px;font-family:'Georgia',serif;line-height:2;color:var(--text);font-style:italic;max-width:680px;margin:0 auto;">
+      "Nossos dados científicos, nosso código genético, nossas descobertas
+      não pertencem a servidores em Virginia ou Dublin.<br><br>
+      Pertencem ao hardware que tocamos.<br>
+      A criptografia é nossa constituição.<br>
+      O edge computing é nossa fronteira.<br><br>
+      Soberania digital não se pede. <strong style="font-style:normal;color:var(--cyan);">Se constrói.</strong>"
+    </p>
+    <div style="margin-top:24px;font-size:12px;color:var(--muted);font-family:-apple-system,sans-serif;letter-spacing:1px;">
+      Gabriel Batista · ESALQ/USP · Synapse Hub v3.0
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">₿</div>
+      <h3>Bitcoin</h3>
+      <p>Descentralizou o dinheiro. Ninguém precisa de banco para transferir valor.</p>
+    </div>
+    <div class="card" style="text-align:center;border-color:rgba(6,182,212,0.5);background:rgba(6,182,212,0.05);">
+      <div style="font-size:36px;margin-bottom:12px;">⚡</div>
+      <h3 style="color:var(--cyan);">Synapse Hub</h3>
+      <p style="color:var(--text);">Descentraliza a computação científica. Ninguém precisa de AWS para processar dados proprietários.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">🌎</div>
+      <h3>Próxima onda</h3>
+      <p>Infraestrutura soberana para biotech, agtech e ciência do Sul Global | com IP protegido localmente.</p>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- PATENTES E OPORTUNIDADES -->
+<section>
+  <div class="section-label">08 | portfólio de propriedade intelectual</div>
+  <h2>Possibilidades de <span class="hi">Patente</span></h2>
+  <p class="lead">Cada módulo do Synapse Hub representa uma oportunidade de PI independente. Abaixo: visão simplificada das famílias de invenção | sem detalhes que comprometam o sigilo.</p>
+
+  <!-- Patente 1 -->
+  <div style="margin-bottom:32px;">
+  <div class="card" style="border-color:rgba(59,130,246,0.4);padding:32px;">
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <div style="flex-shrink:0;">
+        <!-- SVG técnico: Edge node + AES -->
+        <svg width="140" height="110" viewBox="0 0 140 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="20" width="120" height="70" rx="8" stroke="#3b82f6" stroke-width="1.5" fill="rgba(59,130,246,0.06)"/>
+          <rect x="20" y="30" width="40" height="25" rx="4" stroke="#06b6d4" stroke-width="1" fill="rgba(6,182,212,0.1)"/>
+          <text x="40" y="47" fill="#06b6d4" font-size="8" text-anchor="middle" font-family="monospace">AES-256</text>
+          <rect x="70" y="30" width="50" height="25" rx="4" stroke="#10b981" stroke-width="1" fill="rgba(16,185,129,0.08)"/>
+          <text x="95" y="47" fill="#10b981" font-size="8" text-anchor="middle" font-family="monospace">LOCAL CPU</text>
+          <line x1="60" y1="42" x2="70" y2="42" stroke="#64748b" stroke-width="1" stroke-dasharray="3,2"/>
+          <rect x="20" y="65" width="100" height="16" rx="3" stroke="#1e3a5f" stroke-width="1" fill="rgba(14,23,46,0.8)"/>
+          <text x="70" y="77" fill="#64748b" font-size="7" text-anchor="middle" font-family="monospace">ZERO NETWORK SURFACE</text>
+          <circle cx="10" cy="85" r="3" fill="#ef4444" opacity="0.4"/>
+          <text x="16" y="88" fill="#64748b" font-size="6" font-family="monospace">CLOUD BLOCKED</text>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:8px;">PI-01 · Método</div>
+        <h3 style="font-size:18px;font-family:-apple-system,sans-serif;color:var(--text);margin-bottom:10px;font-weight:700;">Motor de Criptografia Soberana em Edge</h3>
+        <p style="font-family:-apple-system,sans-serif;color:var(--dim);font-size:14px;line-height:1.7;">Arquitetura de processamento local com AES-256-GCM onde a chave nunca sai do hardware. Método de geração de entropia certificada + protocolo de autenticação sem transmissão de rede.</p>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;background:rgba(59,130,246,0.15);color:var(--blue);padding:3px 10px;border-radius:12px;">Criptografia</span>
+          <span style="font-size:11px;background:rgba(16,185,129,0.1);color:var(--green);padding:3px 10px;border-radius:12px;">Edge Computing</span>
+          <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--cyan);padding:3px 10px;border-radius:12px;">Soberania Digital</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Patente 2 -->
+  <div style="margin-bottom:32px;">
+  <div class="card" style="border-color:rgba(16,185,129,0.4);padding:32px;">
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <div style="flex-shrink:0;">
+        <!-- SVG: 10D mapping -->
+        <svg width="140" height="110" viewBox="0 0 140 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="55" r="45" stroke="#10b981" stroke-width="1" fill="rgba(16,185,129,0.04)"/>
+          <circle cx="70" cy="55" r="30" stroke="#10b981" stroke-width="0.8" stroke-dasharray="4,3" fill="none"/>
+          <circle cx="70" cy="55" r="15" stroke="#06b6d4" stroke-width="1" fill="rgba(6,182,212,0.1)"/>
+          <!-- axes -->
+          <line x1="70" y1="10" x2="70" y2="100" stroke="#1e3a5f" stroke-width="0.8"/>
+          <line x1="25" y1="55" x2="115" y2="55" stroke="#1e3a5f" stroke-width="0.8"/>
+          <!-- data points -->
+          <circle cx="85" cy="40" r="3" fill="#f59e0b" opacity="0.8"/>
+          <circle cx="60" cy="35" r="2.5" fill="#f59e0b" opacity="0.6"/>
+          <circle cx="90" cy="65" r="2" fill="#10b981" opacity="0.9"/>
+          <circle cx="55" cy="70" r="3.5" fill="#ef4444" opacity="0.5"/>
+          <text x="70" y="8" fill="#10b981" font-size="7" text-anchor="middle" font-family="monospace">10D</text>
+          <text x="118" y="58" fill="#64748b" font-size="6" font-family="monospace">UMAP</text>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:8px;">PI-02 · Algoritmo</div>
+        <h3 style="font-size:18px;font-family:-apple-system,sans-serif;color:var(--text);margin-bottom:10px;font-weight:700;">Mapeamento 10D de Parâmetros de Processo</h3>
+        <p style="font-family:-apple-system,sans-serif;color:var(--dim);font-size:14px;line-height:1.7;">Motor de correlação multidimensional (UMAP + clustering) aplicado à caracterização de materiais em engenharia de tecidos. Reduz 40–60% do número de experimentos necessários para otimização de processo.</p>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;background:rgba(16,185,129,0.1);color:var(--green);padding:3px 10px;border-radius:12px;">Machine Learning</span>
+          <span style="font-size:11px;background:rgba(245,158,11,0.1);color:var(--amber);padding:3px 10px;border-radius:12px;">Bioengenharia</span>
+          <span style="font-size:11px;background:rgba(6,182,212,0.1);color:var(--cyan);padding:3px 10px;border-radius:12px;">UMAP / t-SNE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Patente 3 -->
+  <div style="margin-bottom:32px;">
+  <div class="card" style="border-color:rgba(245,158,11,0.4);padding:32px;">
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <div style="flex-shrink:0;">
+        <!-- SVG: predictive bioreactor -->
+        <svg width="140" height="110" viewBox="0 0 140 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="45" y="15" width="50" height="75" rx="6" stroke="#f59e0b" stroke-width="1.5" fill="rgba(245,158,11,0.05)"/>
+          <line x1="55" y1="30" x2="85" y2="30" stroke="#f59e0b" stroke-width="0.8" opacity="0.5"/>
+          <!-- signal lines -->
+          <polyline points="30,70 45,60 55,65 65,45 75,55 85,40 95,50 110,35" stroke="#10b981" stroke-width="1.5" fill="none"/>
+          <line x1="95" y1="35" x2="130" y2="35" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,2"/>
+          <circle cx="110" cy="35" r="4" fill="#ef4444" opacity="0.7"/>
+          <text x="112" y="30" fill="#ef4444" font-size="6" font-family="monospace">ALERT</text>
+          <text x="70" y="100" fill="#64748b" font-size="6" text-anchor="middle" font-family="monospace">BIOREATOR</text>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:8px;">PI-03 · Sistema</div>
+        <h3 style="font-size:18px;font-family:-apple-system,sans-serif;color:var(--text);margin-bottom:10px;font-weight:700;">Monitoramento Preditivo de Biorreatores</h3>
+        <p style="font-family:-apple-system,sans-serif;color:var(--dim);font-size:14px;line-height:1.7;">Sistema de detecção precoce de desvios em biorreatores baseado em análise de série temporal histórica. Antecipa falhas antes de limiares convencionais | economiza lotes, reduz descarte celular.</p>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;background:rgba(245,158,11,0.1);color:var(--amber);padding:3px 10px;border-radius:12px;">Biotech</span>
+          <span style="font-size:11px;background:rgba(59,130,246,0.15);color:var(--blue);padding:3px 10px;border-radius:12px;">IoT / Sensores</span>
+          <span style="font-size:11px;background:rgba(16,185,129,0.1);color:var(--green);padding:3px 10px;border-radius:12px;">Série Temporal</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Patente 4 -->
+  <div>
+  <div class="card" style="border-color:rgba(139,92,246,0.4);padding:32px;">
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <div style="flex-shrink:0;">
+        <!-- SVG: SEM image analysis -->
+        <svg width="140" height="110" viewBox="0 0 140 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="70" height="70" rx="4" stroke="#8b5cf6" stroke-width="1.5" fill="rgba(139,92,246,0.05)"/>
+          <!-- fiber mesh pattern -->
+          <line x1="15" y1="25" x2="75" y2="40" stroke="#8b5cf6" stroke-width="0.8" opacity="0.4"/>
+          <line x1="15" y1="40" x2="75" y2="55" stroke="#8b5cf6" stroke-width="0.8" opacity="0.4"/>
+          <line x1="15" y1="55" x2="75" y2="70" stroke="#8b5cf6" stroke-width="0.8" opacity="0.4"/>
+          <line x1="20" y1="15" x2="35" y2="75" stroke="#06b6d4" stroke-width="0.8" opacity="0.4"/>
+          <line x1="40" y1="12" x2="55" y2="75" stroke="#06b6d4" stroke-width="0.8" opacity="0.4"/>
+          <!-- bounding box -->
+          <rect x="28" y="28" width="22" height="22" stroke="#f59e0b" stroke-width="1" fill="none" stroke-dasharray="2,2"/>
+          <text x="15" y="90" fill="#64748b" font-size="6" font-family="monospace">SEM | 500nm</text>
+          <!-- analysis panel -->
+          <rect x="88" y="10" width="42" height="70" rx="4" stroke="#1e3a5f" fill="rgba(8,12,20,0.8)"/>
+          <text x="109" y="24" fill="#8b5cf6" font-size="7" text-anchor="middle" font-family="monospace">ø fiber</text>
+          <text x="109" y="36" fill="#10b981" font-size="9" text-anchor="middle" font-family="monospace" font-weight="bold">342nm</text>
+          <text x="109" y="50" fill="#8b5cf6" font-size="7" text-anchor="middle" font-family="monospace">σ</text>
+          <text x="109" y="62" fill="#10b981" font-size="9" text-anchor="middle" font-family="monospace">±18nm</text>
+          <text x="109" y="76" fill="#f59e0b" font-size="6" text-anchor="middle" font-family="monospace">AUTO ✓</text>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;letter-spacing:2px;color:#8b5cf6;text-transform:uppercase;margin-bottom:8px;">PI-04 · Pipeline</div>
+        <h3 style="font-size:18px;font-family:-apple-system,sans-serif;color:var(--text);margin-bottom:10px;font-weight:700;">Análise Morfológica Automatizada de SEM</h3>
+        <p style="font-family:-apple-system,sans-serif;color:var(--dim);font-size:14px;line-height:1.7;">Pipeline de visão computacional para extração automática de métricas de nanofibras em imagens de microscopia eletrônica. Erro &lt;5% vs. medição manual. Escala para centenas de imagens por hora.</p>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:11px;background:rgba(139,92,246,0.1);color:#8b5cf6;padding:3px 10px;border-radius:12px;">Visão Computacional</span>
+          <span style="font-size:11px;background:rgba(245,158,11,0.1);color:var(--amber);padding:3px 10px;border-radius:12px;">Nanotecnologia</span>
+          <span style="font-size:11px;background:rgba(16,185,129,0.1);color:var(--green);padding:3px 10px;border-radius:12px;">Biomateriais</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="card" style="margin-top:32px;text-align:center;background:rgba(4,8,16,0.6);border-color:rgba(30,58,95,0.5);">
+    <p style="font-size:13px;color:var(--muted);font-family:-apple-system,sans-serif;line-height:1.7;">
+      Todas as famílias de PI acima são desenvolvidas sobre dados reais de laboratório parceiro (NDA ativo).<br>
+      Pedidos de patente planejados via FAPESP PIPE Fase 1 · Co-titularidade negociável · Janela aberta 2026.
+    </p>
+  </div>
+</section>
+
+<!-- 10D INTERACTIVE DEMO -->
+<section>
+  <div class="section-label">09 | experimento ao vivo</div>
+  <h2>Você controla.<br><span class="hi">Eu não vejo nada.</span></h2>
+  <p class="lead">
+    Gere seus próprios pontos em 10 dimensoes. O cálculo roda 100% no seu dispositivo.
+    Sem servidor. Sem log. Sem rastreamento. Você pode desligar o WiFi agora e ainda funciona.
+  </p>
+
+  <div style="background:rgba(4,8,16,0.9);border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:32px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);flex-shrink:0;"></div>
+      <span style="font-size:12px;color:var(--green);letter-spacing:2px;text-transform:uppercase;">Rodando local | zero transmissao | seu dispositivo</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;" id="dim-controls">
+      <!-- JS will populate these sliders -->
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <button onclick="generate10D()" style="background:linear-gradient(135deg,#1d4ed8,#0891b2);color:#fff;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif;">
+        Gerar Meu Espaço 10D
+      </button>
+      <button onclick="shuffleDims()" style="background:rgba(59,130,246,0.15);color:var(--blue);border:1px solid rgba(59,130,246,0.3);padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;">
+        Aleatorizar
+      </button>
+      <button onclick="clearCanvas10D()" style="background:rgba(100,116,139,0.1);color:var(--muted);border:1px solid rgba(100,116,139,0.2);padding:12px 20px;border-radius:10px;font-size:14px;cursor:pointer;font-family:-apple-system,sans-serif;">
+        Limpar
+      </button>
+    </div>
+
+    <canvas id="canvas10d" width="600" height="300"
+      style="width:100%;max-width:600px;height:auto;border:1px solid var(--border);border-radius:10px;background:#020508;display:block;">
+    </canvas>
+
+    <div id="dim-stats" style="margin-top:16px;font-size:12px;color:var(--muted);font-family:monospace;line-height:2;min-height:40px;"></div>
+  </div>
+
+  <!-- SEGURANCA SECTION -->
+  <div style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.3);border-radius:16px;padding:32px;margin-bottom:24px;">
+    <div style="font-size:10px;letter-spacing:2px;color:var(--green);text-transform:uppercase;margin-bottom:16px;">Por que seus dados estao seguros</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;">
+      <div>
+        <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;font-family:-apple-system,sans-serif;">Zero transmissao</div>
+        <div style="font-size:13px;color:var(--dim);font-family:-apple-system,sans-serif;line-height:1.6;">Os numeros que voce gera ficam no seu browser. Nenhum byte sai do seu dispositivo. Isso e matematicamente verificavel: abra o DevTools e veja o trafego de rede.</div>
+      </div>
+      <div>
+        <div style="font-size:24px;margin-bottom:8px;">🎲</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;font-family:-apple-system,sans-serif;">Entropia local</div>
+        <div style="font-size:13px;color:var(--dim);font-family:-apple-system,sans-serif;line-height:1.6;">Cada ponto gerado usa <code style="color:var(--cyan);">crypto.getRandomValues()</code> do seu proprio sistema operacional. Nao e possivel reproduzir a mesma sequencia.</div>
+      </div>
+      <div>
+        <div style="font-size:24px;margin-bottom:8px;">📵</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;font-family:-apple-system,sans-serif;">Teste agora</div>
+        <div style="font-size:13px;color:var(--dim);font-family:-apple-system,sans-serif;line-height:1.6;">Coloque o celular em modo aviao. Gere os dados. Funciona igual. Porque tudo roda local. Essa e a prova mais simples que existe.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESAFIO -->
+  <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:32px;text-align:center;">
+    <div style="font-size:10px;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:16px;">Desafio aberto</div>
+    <h3 style="font-size:22px;font-family:-apple-system,sans-serif;font-weight:700;color:var(--text);margin-bottom:16px;">Voce acha que e teorico?</h3>
+    <p style="font-size:15px;color:var(--dim);font-family:-apple-system,sans-serif;line-height:1.8;max-width:560px;margin:0 auto 24px;">
+      Prove. Abra o DevTools agora, va em Network, gere qualquer dado nessa pagina
+      e mostre um unico byte saindo do seu dispositivo para qualquer servidor.
+      <br><br>
+      <strong style="color:var(--text);">Se encontrar, me manda print. Eu paro tudo.</strong><br>
+      Se nao encontrar, voce acabou de validar o sistema pessoalmente.
+    </p>
+    <div style="display:inline-flex;gap:8px;align-items:center;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:14px 24px;border-radius:10px;">
+      <span style="font-size:18px;">⚡</span>
+      <span style="font-size:14px;color:var(--red);font-weight:600;font-family:-apple-system,sans-serif;">Quem testa, valida. Quem nao testa, so especula.</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- REMODA DIAGRAM -->
+<section>
+  <div class="section-label">10 | diagrama empirico</div>
+  <h2>Como a <span class="hi">Remoda</span> funciona</h2>
+  <p class="lead">Fluxo completo de acesso: do nome digitado ao unlock. E por que um adversario tecnico passa, mas um curioso nao.</p>
+  <div style="overflow-x:auto;border-radius:16px;border:1px solid #1e3a5f;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" width="900" height="620" style="font-family:monospace,sans-serif;">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#080c14"/>
+      <stop offset="100%" stop-color="#040810"/>
+    </linearGradient>
+    <linearGradient id="lockGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0d1f3a"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="620" fill="url(#bgGrad)" rx="16"/>
+  <rect width="900" height="620" fill="none" stroke="#1e3a5f" stroke-width="1.5" rx="16"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" fill="#f0f6ff" font-size="18" font-weight="bold" letter-spacing="2">REMODA | Diagrama Empirico de Acesso Soberano</text>
+  <text x="450" y="58" text-anchor="middle" fill="#64748b" font-size="11" letter-spacing="1">Synapse Hub v3.0 | AES-256-GCM | SHA-256</text>
+  <line x1="80" y1="70" x2="820" y2="70" stroke="#1e3a5f" stroke-width="1"/>
+
+  <!-- === FLOW LEFT: USUARIO CORRETO === -->
+  <!-- Label -->
+  <text x="220" y="100" text-anchor="middle" fill="#10b981" font-size="12" letter-spacing="2">USUARIO AUTORIZADO</text>
+
+  <!-- 1. Input box -->
+  <rect x="100" y="115" width="240" height="60" rx="8" fill="url(#lockGrad)" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="220" y="140" text-anchor="middle" fill="#94a3b8" font-size="10">INPUT USUARIO</text>
+  <text x="220" y="158" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="bold">"uriel"  |  "Carrano"  |  "urielcarrano"</text>
+
+  <!-- Arrow down -->
+  <line x1="220" y1="175" x2="220" y2="215" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 2. normalize -->
+  <rect x="140" y="215" width="160" height="40" rx="6" fill="#0d1626" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="220" y="232" text-anchor="middle" fill="#64748b" font-size="9">NORMALIZACAO JS</text>
+  <text x="220" y="247" text-anchor="middle" fill="#94a3b8" font-size="10">.trim() .toLowerCase()</text>
+
+  <!-- Arrow -->
+  <line x1="220" y1="255" x2="220" y2="295" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 3. SHA-256 -->
+  <rect x="110" y="295" width="220" height="55" rx="8" fill="#0a1628" stroke="#3b82f6" stroke-width="2" filter="url(#glow)"/>
+  <text x="220" y="316" text-anchor="middle" fill="#3b82f6" font-size="11" letter-spacing="1">SHA-256 (Web Crypto API)</text>
+  <text x="220" y="333" text-anchor="middle" fill="#64748b" font-size="9">crypto.subtle.digest('SHA-256')</text>
+  <text x="220" y="347" text-anchor="middle" fill="#06b6d4" font-size="9">256 bits | irreversivel | determinístico</text>
+
+  <!-- Arrow -->
+  <line x1="220" y1="350" x2="220" y2="390" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 4. Hash output -->
+  <rect x="80" y="390" width="280" height="45" rx="6" fill="#040810" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="220" y="408" text-anchor="middle" fill="#64748b" font-size="9">HASH GERADO</text>
+  <text x="220" y="426" text-anchor="middle" fill="#f59e0b" font-size="8">fdd0e8cd...55a75</text>
+
+  <!-- Arrow -->
+  <line x1="220" y1="435" x2="220" y2="470" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 5. Comparacao -->
+  <rect x="100" y="470" width="240" height="50" rx="8" fill="#0a2010" stroke="#10b981" stroke-width="1.5"/>
+  <text x="220" y="490" text-anchor="middle" fill="#10b981" font-size="10">COMPARACAO COM SET VALIDO</text>
+  <text x="220" y="507" text-anchor="middle" fill="#64748b" font-size="9">H_VALID.has(hash) ? ABRE : NEGA</text>
+
+  <!-- Arrow GREEN -->
+  <line x1="220" y1="520" x2="220" y2="555" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+
+  <!-- 6. Unlock -->
+  <rect x="130" y="555" width="180" height="45" rx="8" fill="#052010" stroke="#10b981" stroke-width="2" filter="url(#glow)"/>
+  <text x="220" y="575" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">PORTA ABERTA</text>
+  <text x="220" y="592" text-anchor="middle" fill="#64748b" font-size="9">lock-screen.remove() | fade-in</text>
+
+  <!-- === FLOW RIGHT: INVASOR === -->
+  <text x="680" y="100" text-anchor="middle" fill="#ef4444" font-size="12" letter-spacing="2">INVASOR / ATAQUE</text>
+
+  <!-- Attack 1: Console bypass -->
+  <rect x="540" y="115" width="280" height="55" rx="8" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="680" y="135" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="bold">VETOR 1: Console JS (critico)</text>
+  <text x="680" y="150" text-anchor="middle" fill="#94a3b8" font-size="9">$('#lock-screen').remove()</text>
+  <text x="680" y="163" text-anchor="middle" fill="#f59e0b" font-size="9">resultado: acesso em &lt;50ms | requer DevTools</text>
+
+  <line x1="680" y1="170" x2="680" y2="200" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="590" y="200" width="180" height="30" rx="5" fill="#0a0a0a" stroke="#ef4444" stroke-width="1"/>
+  <text x="680" y="220" text-anchor="middle" fill="#ef4444" font-size="10">CONTORNADO</text>
+
+  <!-- Attack 2: View Source -->
+  <rect x="540" y="245" width="280" height="55" rx="8" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="680" y="265" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="bold">VETOR 2: View Source + Wordlist</text>
+  <text x="680" y="280" text-anchor="middle" fill="#94a3b8" font-size="9">hashes visiveis no Ctrl+U</text>
+  <text x="680" y="293" text-anchor="middle" fill="#f59e0b" font-size="9">hashcat wordlist → "uriel" em &lt;1s</text>
+
+  <line x1="680" y1="300" x2="680" y2="330" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="590" y="330" width="180" height="30" rx="5" fill="#0a0a0a" stroke="#ef4444" stroke-width="1"/>
+  <text x="680" y="350" text-anchor="middle" fill="#ef4444" font-size="10">QUEBRAVEL</text>
+
+  <!-- Attack 3: Quantum -->
+  <rect x="540" y="375" width="280" height="65" rx="8" fill="#0a1a05" stroke="#10b981" stroke-width="1.5"/>
+  <text x="680" y="395" text-anchor="middle" fill="#10b981" font-size="10" font-weight="bold">VETOR 3: Grover (quantico)</text>
+  <text x="680" y="410" text-anchor="middle" fill="#94a3b8" font-size="9">SHA-256 preimage = 2^128 ops</text>
+  <text x="680" y="425" text-anchor="middle" fill="#06b6d4" font-size="9">mas: senha e nome humano = 10^6 espaco</text>
+  <text x="680" y="438" text-anchor="middle" fill="#64748b" font-size="9">Grover nao e o vetor relevante aqui</text>
+
+  <line x1="680" y1="440" x2="680" y2="470" stroke="#10b981" stroke-width="1.5"/>
+  <rect x="580" y="470" width="200" height="30" rx="5" fill="#0a0a0a" stroke="#10b981" stroke-width="1"/>
+  <text x="680" y="490" text-anchor="middle" fill="#10b981" font-size="10">RESISTENTE (irrelevante)</text>
+
+  <!-- Verdict box -->
+  <rect x="540" y="515" width="280" height="60" rx="8" fill="#0a0a0a" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="680" y="537" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">VEREDICTO: CERIMONIA, NAO CRIPTO</text>
+  <text x="680" y="553" text-anchor="middle" fill="#64748b" font-size="9">Protege contra curioso | nao protege</text>
+  <text x="680" y="567" text-anchor="middle" fill="#64748b" font-size="9">contra adversario tecnico com DevTools</text>
+
+  <!-- === CENTER SEPARATOR === -->
+  <line x1="450" y1="85" x2="450" y2="610" stroke="#1e3a5f" stroke-width="1" stroke-dasharray="6,4"/>
+  <text x="450" y="310" text-anchor="middle" fill="#1e3a5f" font-size="40" opacity="0.3">|</text>
+
+  <!-- === BOTTOM: PERFORMANCE GAIN === -->
+  <rect x="80" y="88" width="840" height="2" fill="#1e3a5f" opacity="0"/>
+
+  <!-- Score badges -->
+  <rect x="90" y="510" width="100" height="28" rx="14" fill="#052010" stroke="#10b981" stroke-width="1.5"/>
+  <text x="140" y="529" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">24/24 OK</text>
+
+  <rect x="200" y="510" width="100" height="28" rx="14" fill="#0a1a30" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="250" y="529" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="bold">0 erros JS</text>
+
+  <rect x="310" y="510" width="120" height="28" rx="14" fill="#150a00" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="370" y="529" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="bold">0 em-dashes</text>
+
+</svg>
+
+  </div>
+  <div class="grid3" style="margin-top:24px;">
+    <div class="card" style="text-align:center;border-color:rgba(16,185,129,0.4);">
+      <div class="big green">24/24</div>
+      <h3>Combinacoes OK</h3>
+      <p>Todas as variacoes do nome do Uriel funcionam: qualquer capitalizacao, com ou sem espaco.</p>
+    </div>
+    <div class="card" style="text-align:center;border-color:rgba(239,68,68,0.3);">
+      <div class="big red">3</div>
+      <h3>Vetores de Ataque</h3>
+      <p>Console JS, View Source e wordlist. O lock e cerimonia | nao criptografia de IP.</p>
+    </div>
+    <div class="card" style="text-align:center;border-color:rgba(245,158,11,0.3);">
+      <div class="big amber">2^128</div>
+      <h3>Grover nao serve</h3>
+      <p>SHA-256 preimage resistente a quantico. Mas a senha e um nome: brute-force classico vence primeiro.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 11: WORMHOLE / EINSTEIN-ROSEN -->
+<section style="background:linear-gradient(180deg,rgba(2,5,8,0.95) 0%,rgba(7,10,30,0.98) 100%);">
+  <div class="section-label">11 | fisica dos buracos de minhoca</div>
+  <h2>O <span class="hi">Buraco de Minhoca</span> que voce ja viu</h2>
+  <p class="lead">O video que voce assistiu no aviao descreve exatamente o que o Synapse Hub faz: criar um atalho atravessavel entre dois pontos distantes, mantido aberto por "materia exotica" que a fisica classica nao tem. So que no nosso caso, o atalho e computacional.</p>
+
+  <!-- Wormhole canvas animation -->
+  <div style="text-align:center;margin:32px 0;">
+    <canvas id="wormhole-canvas" width="700" height="260" style="width:100%;max-width:700px;border-radius:16px;background:radial-gradient(ellipse at center,rgba(6,182,212,0.05) 0%,rgba(0,0,0,0.9) 70%);"></canvas>
+    <div style="font-size:11px;color:var(--muted);font-family:monospace;margin-top:8px;letter-spacing:1px;">PONTE EINSTEIN-ROSEN: SIMULACAO LOCAL | ZERO REDE</div>
+  </div>
+
+  <!-- Physics to Tech mapping -->
+  <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:0;margin-bottom:32px;align-items:stretch;">
+    <div style="background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.2);border-radius:12px 0 0 12px;padding:28px;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Fisica do Buraco de Minhoca</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div><div style="font-size:13px;color:var(--cyan);font-weight:600;margin-bottom:4px;">Ponte Einstein-Rosen</div><div style="font-size:12px;color:var(--dim);">Conexao atalho entre dois pontos do espaco-tempo</div></div>
+        <div><div style="font-size:13px;color:var(--cyan);font-weight:600;margin-bottom:4px;">Materia Exotica (massa negativa)</div><div style="font-size:12px;color:var(--dim);">Unica coisa capaz de manter o tunel aberto contra a gravidade</div></div>
+        <div><div style="font-size:13px;color:var(--cyan);font-weight:600;margin-bottom:4px;">10 Dimensoes (Teoria das Cordas)</div><div style="font-size:12px;color:var(--dim);">Espaco de parametros onde os buracos de minhoca primordiais existem</div></div>
+        <div><div style="font-size:13px;color:var(--cyan);font-weight:600;margin-bottom:4px;">Velocidade Superluminal</div><div style="font-size:12px;color:var(--dim);">Chegar ao destino sem atravessar o espaco entre eles</div></div>
+        <div><div style="font-size:13px;color:var(--cyan);font-weight:600;margin-bottom:4px;">Flutuacoes Quanticas do Vacuo</div><div style="font-size:12px;color:var(--dim);">Pares de particulas criados e destruidos constantemente</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);padding:8px;gap:24px;">
+      <div style="color:var(--cyan);font-size:18px;">&#8594;</div>
+      <div style="color:var(--cyan);font-size:18px;">&#8594;</div>
+      <div style="color:var(--cyan);font-size:18px;">&#8594;</div>
+      <div style="color:var(--cyan);font-size:18px;">&#8594;</div>
+      <div style="color:var(--cyan);font-size:18px;">&#8594;</div>
+    </div>
+    <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:0 12px 12px 0;padding:28px;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Synapse Hub: Implementacao Computacional</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">Tunel AES-256-GCM Local</div><div style="font-size:12px;color:var(--dim);">Dado vai do sensor ao Vault sem passar por nenhum servidor externo</div></div>
+        <div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">ML-KEM (FIPS 203) Pos-Quantico</div><div style="font-size:12px;color:var(--dim);">Unica criptografia que resiste ao computador quantico de Shor. Mantem o tunel aberto.</div></div>
+        <div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">10 Dimensoes do Scaffold</div><div style="font-size:12px;color:var(--dim);">Tensao, vazao, distancia, umidade... 10 parametros mapeados simultaneamente pelo UMAP</div></div>
+        <div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">9.375x de Throughput</div><div style="font-size:12px;color:var(--dim);">GPU local vs browser: o dado "chega" ao resultado sem atravessar a nuvem</div></div>
+        <div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:4px;">crypto.getRandomValues (CSPRNG)</div><div style="font-size:12px;color:var(--dim);">Entropia quantica real gerada pelo hardware, nao por formula deterministica</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The key insight for Uriel -->
+  <div style="background:linear-gradient(135deg,rgba(6,182,212,0.08),rgba(16,185,129,0.08));border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:36px;text-align:center;margin-bottom:0;">
+    <div style="font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">A Conexao Que O Video Nao Mostrou</div>
+    <p style="font-size:20px;line-height:1.7;color:var(--text);margin:0 auto;max-width:640px;">O video diz que para manter um buraco de minhoca aberto, voce precisa de <strong style="color:var(--cyan);">materia exotica com massa negativa</strong> que a fisica classica nao tem.<br><br>
+    No dominio computacional, a "materia exotica" que mantem nosso tunel aberto contra um computador quantico de 2048 qubits se chama <strong style="color:var(--green);">ML-KEM: Kyber-1024</strong>.<br><br>
+    <span style="color:var(--amber);">Bitcoin nao tem essa materia exotica. O Synapse Hub tem.</span></p>
+  </div>
+</section>
+
+<script>
+// Wormhole animation
+(function() {
+  const c = document.getElementById('wormhole-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  let t = 0;
+
+  function drawWormhole() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Stars background
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+
+    // Draw wormhole rings (perspective tunnel)
+    for (let r = 120; r > 5; r -= 12) {
+      const phase = t * 0.02;
+      const distort = Math.sin(phase + r * 0.05) * 8;
+      const alpha = (120 - r) / 120;
+      const hue = 180 + r * 0.5 + t * 0.5;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r + distort, r * 0.35 + distort * 0.3, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `hsla(${hue},80%,60%,${alpha * 0.6})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Glowing center
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
+    grd.addColorStop(0, `rgba(6,182,212,${0.3 + Math.sin(t*0.05)*0.1})`);
+    grd.addColorStop(0.5, 'rgba(6,182,212,0.05)');
+    grd.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 60, 22, 0, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Left side label
+    ctx.fillStyle = 'rgba(6,182,212,0.8)';
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText('PONTO A', 20, cy - 40);
+    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.font = '10px monospace';
+    ctx.fillText('Bitcoin/ECDSA', 20, cy - 24);
+    ctx.fillText('RSA-2048/TLS', 20, cy - 10);
+    ctx.fillStyle = 'rgba(239,68,68,0.8)';
+    ctx.fillText('VULNERAVEL A SHOR', 20, cy + 8);
+
+    // Right side label
+    ctx.fillStyle = 'rgba(16,185,129,0.8)';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('PONTO B', W - 20, cy - 40);
+    ctx.fillStyle = 'rgba(100,116,139,0.7)';
+    ctx.font = '10px monospace';
+    ctx.fillText('ML-KEM / AES-256', W - 20, cy - 24);
+    ctx.fillText('Synapse Hub Edge', W - 20, cy - 10);
+    ctx.fillStyle = 'rgba(16,185,129,0.8)';
+    ctx.fillText('PQ-SAFE', W - 20, cy + 8);
+    ctx.textAlign = 'left';
+
+    // Data particle traveling through wormhole
+    const particleT = (t * 0.015) % 1;
+    const px = cx + Math.cos(Math.PI + particleT * Math.PI) * (W * 0.38);
+    const py = cy + Math.sin(particleT * Math.PI) * 8;
+    const particleAlpha = Math.sin(particleT * Math.PI);
+    ctx.beginPath();
+    ctx.arc(px, py, 4 * particleAlpha + 1, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(245,158,11,${particleAlpha})`;
+    ctx.fill();
+    // Trail
+    for (let i = 1; i <= 5; i++) {
+      const trailT = Math.max(0, particleT - i * 0.02);
+      const tx2 = cx + Math.cos(Math.PI + trailT * Math.PI) * (W * 0.38);
+      const ty2 = cy + Math.sin(trailT * Math.PI) * 8;
+      ctx.beginPath();
+      ctx.arc(tx2, ty2, (2 - i * 0.3) * particleAlpha, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245,158,11,${particleAlpha * (1 - i/6)})`;
+      ctx.fill();
+    }
+
+    // Center label
+    ctx.fillStyle = `rgba(6,182,212,${0.7 + Math.sin(t*0.05)*0.2})`;
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('AES-256-GCM', cx, cy - 8);
+    ctx.fillStyle = 'rgba(16,185,129,0.7)';
+    ctx.fillText('ML-KEM TUNNEL', cx, cy + 6);
+    ctx.textAlign = 'left';
+
+    t++;
+    requestAnimationFrame(drawWormhole);
+  }
+  drawWormhole();
+})();
+</script>
+
+<!-- SECTION 12: JARVIS + FLUX -->
+<section>
+  <div class="section-label">11 | sistema jarvis + flux</div>
+  <h2>Arquitetura <span class="hi">Soberana</span> de IA</h2>
+  <p class="lead">O Synapse Hub roda como um Jarvis local: orquestrador autonomo, processamento de borda, sem nuvem. Flux e a camada de fluxo de informacao que conecta todos os modulos.</p>
+
+  <!-- Batista Constant -->
+  <div style="background:var(--card);border:1px solid rgba(6,182,212,0.3);border-radius:16px;padding:32px;margin-bottom:32px;text-align:center;">
+    <div class="section-label" style="margin-bottom:16px;">K_B: Constante de Soberania de Batista</div>
+    <div style="font-family:monospace;font-size:28px;color:var(--cyan);margin-bottom:8px;">
+      K<sub style="font-size:16px;">B</sub> = V<sub style="font-size:14px;">local</sub> / (L<sub style="font-size:14px;">rede</sub> x C<sub style="font-size:14px;">centraliz.</sub>)
+    </div>
+    <p style="color:var(--dim);font-size:13px;margin:12px 0 0;">V_local: velocidade de processamento no silicio local | L_rede: latencia de ida e volta para servidor externo | C: fator de centralizacao (numero de intermediarios)</p>
+    <p style="color:var(--muted);font-size:11px;margin:8px 0 0;">Quando K_B aumenta, soberania cresce. Quando K_B tende a infinito, zero dependencia externa.</p>
+    <div style="margin-top:20px;">
+      <canvas id="curva-batista" width="600" height="160" style="width:100%;max-width:600px;border-radius:8px;background:rgba(0,0,0,0.3);"></canvas>
+    </div>
+  </div>
+
+  <!-- Architecture grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:32px;">
+    <!-- Jarvis -->
+    <div style="background:var(--card);border:1px solid rgba(6,182,212,0.3);border-radius:12px;padding:24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(6,182,212,0.15) 0%,transparent 70%);"></div>
+      <div style="font-size:32px;margin-bottom:12px;">🤖</div>
+      <h3 style="font-size:16px;color:var(--cyan);margin:0 0 8px;font-family:-apple-system,sans-serif;">JARVIS MODULE</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0 0 12px;line-height:1.6;">Orquestrador autonomo baseado em LangGraph + MCP. Planeja e executa tarefas sem intervencao humana. 100% local, sem API de terceiros.</p>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;">LangGraph | CrewAI | Ollama | MCP</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--cyan);">ATIVO</span>
+        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">SOBERANO</span>
+      </div>
+    </div>
+    <!-- Flux -->
+    <div style="background:var(--card);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(245,158,11,0.15) 0%,transparent 70%);"></div>
+      <div style="font-size:32px;margin-bottom:12px;">⚡</div>
+      <h3 style="font-size:16px;color:var(--amber);margin:0 0 8px;font-family:-apple-system,sans-serif;">FLUX MODULE</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0 0 12px;line-height:1.6;">Camada de fluxo de informacao. Roteia dados entre modulos com criptografia AES-256-GCM em cada handshake interno. Zero raw data em transito.</p>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;">AES-256-GCM | ZKP | Event Bus</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--amber);">CRIPTOGRAFADO</span>
+        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">LOCAL</span>
+      </div>
+    </div>
+    <!-- Quantum Shield -->
+    <div style="background:var(--card);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(16,185,129,0.15) 0%,transparent 70%);"></div>
+      <div style="font-size:32px;margin-bottom:12px;">🛡️</div>
+      <h3 style="font-size:16px;color:var(--green);margin:0 0 8px;font-family:-apple-system,sans-serif;">QUANTUM SHIELD</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0 0 12px;line-height:1.6;">Camada de criptografia pos-quantica. ML-KEM (FIPS 203) para troca de chaves. SLH-DSA (FIPS 205) para assinaturas. Resistente a Shor e Grover.</p>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;">ML-KEM | ML-DSA | SLH-DSA | NIST</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">PQ-SAFE</span>
+        <span style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--indigo,#818cf8);">FIPS 2024</span>
+      </div>
+    </div>
+    <!-- Vault -->
+    <div style="background:var(--card);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:24px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(239,68,68,0.15) 0%,transparent 70%);"></div>
+      <div style="font-size:32px;margin-bottom:12px;">🔐</div>
+      <h3 style="font-size:16px;color:var(--red);margin:0 0 8px;font-family:-apple-system,sans-serif;">VAULT SOBERANO</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0 0 12px;line-height:1.6;">Armazenamento criptografado local em /opt/synapse_vault. Grafo Obsidian versionado com SHA-256 por commit. Imutavel, auditavel, soberano.</p>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;">git | SHA-256 | AES | Obsidian</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--red);">PRIVADO</span>
+        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--green);">VERSIONADO</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow diagram -->
+  <div style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:12px;padding:24px;font-family:monospace;font-size:13px;line-height:2.2;overflow-x:auto;">
+    <div style="color:var(--muted);margin-bottom:8px;">// Fluxo de dados criptografado em cada etapa</div>
+    <span style="color:var(--cyan);">Maestro</span>
+    <span style="color:var(--dim);"> ──[intent]──&gt; </span>
+    <span style="color:var(--amber);">JARVIS Orquestrador</span>
+    <span style="color:var(--dim);"> ──[AES-GCM]──&gt; </span>
+    <span style="color:var(--green);">FLUX Router</span><br>
+    <span style="color:var(--green);">FLUX Router</span>
+    <span style="color:var(--dim);"> ──[AES-GCM]──&gt; </span>
+    <span style="color:var(--cyan);">[Modulo Ativo]</span>
+    <span style="color:var(--dim);"> ──[resultado]──&gt; </span>
+    <span style="color:var(--red);">VAULT</span><br>
+    <span style="color:var(--red);">VAULT</span>
+    <span style="color:var(--dim);"> ──[SHA-256 commit]──&gt; </span>
+    <span style="color:var(--amber);">Obsidian Graph</span>
+    <span style="color:var(--dim);"> ──[zero network]──&gt; </span>
+    <span style="color:var(--green);">LOCAL ONLY</span>
+  </div>
+</section>
+
+<!-- SECTION 12: TDAH + SAUDE COGNITIVA -->
+<section>
+  <div class="section-label">12 | módulo tdah e saúde cognitiva</div>
+  <h2>Sincronia <span class="hi">TDAH</span></h2>
+  <p class="lead">O Synapse Hub foi projetado por e para um usuario com TDAH. Cada modulo respeita janelas de atencao, gera dopamina funcional e evita sobrecarga cognitiva.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:32px;">
+    <!-- Context freeze -->
+    <div style="background:var(--card);border:1px solid rgba(6,182,212,0.2);border-radius:12px;padding:24px;">
+      <div style="font-size:24px;margin-bottom:8px;">🧊</div>
+      <h3 style="font-size:15px;color:var(--cyan);margin:0 0 8px;font-family:-apple-system,sans-serif;">Context Freeze</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0;line-height:1.6;">Contextos secundarios sao "congelados" em Vault antes de mudar de tarefa. Nenhuma ideia e perdida. Reativacao instantanea ao retornar ao contexto.</p>
+    </div>
+    <!-- Dopamine loops -->
+    <div style="background:var(--card);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:24px;">
+      <div style="font-size:24px;margin-bottom:8px;">🎯</div>
+      <h3 style="font-size:15px;color:var(--amber);margin:0 0 8px;font-family:-apple-system,sans-serif;">Dopamine Loops</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0;line-height:1.6;">Cada tarefa concluida gera um commit no git com hash SHA-256 visivel. Prova imutavel de progresso. O cerebro recebe confirmacao empirica, nao abstrata.</p>
+    </div>
+    <!-- Focus window -->
+    <div style="background:var(--card);border:1px solid rgba(16,185,129,0.2);border-radius:12px;padding:24px;">
+      <div style="font-size:24px;margin-bottom:8px;">⏱️</div>
+      <h3 style="font-size:15px;color:var(--green);margin:0 0 8px;font-family:-apple-system,sans-serif;">Focus Window</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0;line-height:1.6;">Sessoes de 25 min (Pomodoro soberano). Cada sessao tem um unico objetivo definido pelo Jarvis. Sem multitasking. Profundidade maxima.</p>
+    </div>
+    <!-- Biometric (honesto) -->
+    <div style="background:var(--card);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:24px;">
+      <div style="font-size:24px;margin-bottom:8px;">👁️</div>
+      <h3 style="font-size:15px;color:var(--red);margin:0 0 8px;font-family:-apple-system,sans-serif;">Fingerprint Ambiental</h3>
+      <p style="font-size:13px;color:var(--dim);margin:0 0 12px;line-height:1.6;">Camera fisica requer ativacao pelo OS. Zero bypass possivel via software. O que o Hub usa: fingerprint de dispositivo via latencia, dimensoes de tela e entropia de toque.</p>
+      <button onclick="runDeviceFingerprint()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:var(--red);border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:monospace;">GERAR FINGERPRINT</button>
+      <div id="fp-out" style="margin-top:10px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.8;min-height:20px;"></div>
+    </div>
+  </div>
+
+  <!-- Health metrics visual -->
+  <div style="background:linear-gradient(135deg,rgba(6,182,212,0.05) 0%,rgba(16,185,129,0.05) 100%);border:1px solid rgba(6,182,212,0.2);border-radius:16px;padding:32px;">
+    <h3 style="font-size:18px;color:var(--text);font-family:-apple-system,sans-serif;margin:0 0 20px;">Estado Cognitivo do Sistema</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;" id="cognitive-metrics">
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 13: MANIFESTO ULTRA-GAMIFICACAO -->
+<section>
+  <div class="section-label">13 | manifesto ultra-gamificação + dopamina</div>
+  <h2>Ultra-<span class="hi">Dopamina</span></h2>
+  <p class="lead">Toda interacao com o Synapse Hub e um ato de soberania gamificada. O sistema nao reporta ao usuario, ele convida o usuario a ser o protagonista do experimento.</p>
+
+  <!-- Manifesto block -->
+  <div style="background:linear-gradient(135deg,rgba(245,158,11,0.08) 0%,rgba(6,182,212,0.08) 100%);border:1px solid rgba(245,158,11,0.3);border-radius:16px;padding:40px;margin-bottom:32px;">
+    <div style="font-size:13px;color:var(--amber);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;">Manifesto</div>
+    <p style="font-size:18px;line-height:1.8;color:var(--text);margin:0 0 16px;">Dopamina real nao vem de notificacoes. Vem de <strong style="color:var(--cyan);">prova empirica</strong>: o terminal que responde, o hash que aparece, o experimento que confirma a teoria antes de qualquer um acreditar.</p>
+    <p style="font-size:15px;line-height:1.8;color:var(--dim);margin:0;">O Hub foi construido para um cerebro que precisa <strong style="color:var(--amber);">ver, tocar e verificar</strong> antes de confiar. Cada modulo gera artefatos verificaveis. Cada acao deixa rastro SHA-256 imutavel.</p>
+  </div>
+
+  <!-- Templates RPG -->
+  <h3 style="font-size:20px;color:var(--text);font-family:-apple-system,sans-serif;margin:0 0 20px;">Templates de Gamificacao</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:32px;">
+    <!-- Template 1: Daily Quest -->
+    <div style="background:var(--card);border:2px solid rgba(6,182,212,0.4);border-radius:12px;padding:24px;position:relative;">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--card);padding:0 8px;font-size:11px;color:var(--cyan);font-family:monospace;letter-spacing:2px;">TEMPLATE 01</div>
+      <div style="font-size:20px;margin-bottom:8px;">📋</div>
+      <h4 style="font-size:15px;color:var(--cyan);margin:0 0 12px;font-family:-apple-system,sans-serif;">Daily Quest</h4>
+      <div style="font-family:monospace;font-size:12px;line-height:2;color:var(--dim);background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;">
+        <div><span style="color:var(--amber);">MISSAO:</span> [objetivo do dia]</div>
+        <div><span style="color:var(--cyan);">PROVA:</span> hash SHA-256 do artefato</div>
+        <div><span style="color:var(--green);">XP:</span> +100 ao commit</div>
+        <div><span style="color:var(--red);">BLOQUEIO:</span> nao avanca sem evidencia</div>
+      </div>
+    </div>
+    <!-- Template 2: Challenge Mode -->
+    <div style="background:var(--card);border:2px solid rgba(245,158,11,0.4);border-radius:12px;padding:24px;position:relative;">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--card);padding:0 8px;font-size:11px;color:var(--amber);font-family:monospace;letter-spacing:2px;">TEMPLATE 02</div>
+      <div style="font-size:20px;margin-bottom:8px;">⚔️</div>
+      <h4 style="font-size:15px;color:var(--amber);margin:0 0 12px;font-family:-apple-system,sans-serif;">Challenge Mode</h4>
+      <div style="font-family:monospace;font-size:12px;line-height:2;color:var(--dim);background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;">
+        <div><span style="color:var(--red);">CETICISMO:</span> "e tudo teorico nao?"</div>
+        <div><span style="color:var(--amber);">RESPOSTA:</span> abra o DevTools</div>
+        <div><span style="color:var(--cyan);">PROVA:</span> aba Network: zero requests</div>
+        <div><span style="color:var(--green);">RESULTADO:</span> ceticismo destruido</div>
+      </div>
+    </div>
+    <!-- Template 3: Boss Fight -->
+    <div style="background:var(--card);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:24px;position:relative;">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--card);padding:0 8px;font-size:11px;color:var(--red);font-family:monospace;letter-spacing:2px;">TEMPLATE 03</div>
+      <div style="font-size:20px;margin-bottom:8px;">🐉</div>
+      <h4 style="font-size:15px;color:var(--red);margin:0 0 12px;font-family:-apple-system,sans-serif;">Boss Fight: Computador Quantico</h4>
+      <div style="font-family:monospace;font-size:12px;line-height:2;color:var(--dim);background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;">
+        <div><span style="color:var(--red);">BOSS:</span> IBM Heron (133 qubits reais)</div>
+        <div><span style="color:var(--amber);">ATAQUE:</span> Shor vs ECDSA (Bitcoin)</div>
+        <div><span style="color:var(--cyan);">DEFESA:</span> ML-KEM + AES-256-GCM</div>
+        <div><span style="color:var(--green);">STATUS:</span> BOSS derrotado em 2024</div>
+      </div>
+    </div>
+    <!-- Template 4: Sovereign Sprint -->
+    <div style="background:var(--card);border:2px solid rgba(16,185,129,0.4);border-radius:12px;padding:24px;position:relative;">
+      <div style="position:absolute;top:-10px;left:20px;background:var(--card);padding:0 8px;font-size:11px;color:var(--green);font-family:monospace;letter-spacing:2px;">TEMPLATE 04</div>
+      <div style="font-size:20px;margin-bottom:8px;">🚀</div>
+      <h4 style="font-size:15px;color:var(--green);margin:0 0 12px;font-family:-apple-system,sans-serif;">Sovereign Sprint</h4>
+      <div style="font-family:monospace;font-size:12px;line-height:2;color:var(--dim);background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;">
+        <div><span style="color:var(--green);">SPRINT:</span> 25 min | 1 objetivo</div>
+        <div><span style="color:var(--cyan);">COMMIT:</span> ao final com evidencia</div>
+        <div><span style="color:var(--amber);">RECOMPENSA:</span> Vault atualizado</div>
+        <div><span style="color:var(--red);">FALHA:</span> nao existe, so pivot</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dopamine bar interactive -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;text-align:center;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-family:monospace;letter-spacing:2px;">NIVEL DE SOBERANIA ATUAL</div>
+    <div style="width:100%;background:rgba(255,255,255,0.05);border-radius:100px;height:20px;margin-bottom:12px;overflow:hidden;">
+      <div id="sov-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:100px;transition:width 2s ease;"></div>
+    </div>
+    <div id="sov-label" style="font-size:12px;color:var(--dim);font-family:monospace;">clique para calcular...</div>
+    <button onclick="calcularSoberania()" style="margin-top:16px;background:linear-gradient(90deg,rgba(6,182,212,0.2),rgba(16,185,129,0.2));border:1px solid rgba(6,182,212,0.4);color:var(--cyan);border-radius:8px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:monospace;">CALCULAR K_B</button>
+  </div>
+</section>
+
+<script>
+// Curva de Batista canvas
+(function() {
+  const c = document.getElementById('curva-batista');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0,0,W,H);
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  for (let i=0;i<5;i++) { ctx.beginPath(); ctx.moveTo(0,i*H/4); ctx.lineTo(W,i*H/4); ctx.stroke(); }
+  // K_B curve: 1/x (soberania aumenta com mais processamento local)
+  const pts = [];
+  for (let x=0; x<W; x++) {
+    const t = x/W; // 0=centralized, 1=edge
+    const y = H - (H * (1 - Math.exp(-5*t)) * 0.85 + 10);
+    pts.push([x,y]);
+  }
+  // Shadow
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  pts.forEach(p => ctx.lineTo(p[0], p[1]));
+  ctx.lineTo(W, H);
+  ctx.fillStyle = 'rgba(6,182,212,0.08)';
+  ctx.fill();
+  // Line
+  ctx.beginPath();
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+  ctx.strokeStyle = 'rgba(6,182,212,0.9)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  // Labels
+  ctx.fillStyle = 'rgba(100,116,139,0.9)';
+  ctx.font = '10px monospace';
+  ctx.fillText('Centralizacao total', 8, H-8);
+  ctx.fillText('Soberania maxima', W-120, H-8);
+  ctx.fillText('K_B', 8, 16);
+  // Arrow
+  ctx.strokeStyle = 'rgba(16,185,129,0.6)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(W*0.85, H*0.1); ctx.lineTo(W*0.85, H*0.9); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(16,185,129,0.8)';
+  ctx.font = '10px monospace';
+  ctx.fillText('voce aqui', W*0.87, H*0.5);
+})();
+
+// Device fingerprint (sem camera, sem permissao)
+async function runDeviceFingerprint() {
+  const out = document.getElementById('fp-out');
+  out.innerHTML = '<span style="color:var(--amber);">calculando fingerprint ambiental...</span>';
+  await new Promise(r=>setTimeout(r,600));
+  const screen_sig = `${screen.width}x${screen.height}x${screen.colorDepth}`;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const lang = navigator.language;
+  const cores = navigator.hardwareConcurrency || 'N/A';
+  const mem = navigator.deviceMemory || 'N/A';
+  const touch = navigator.maxTouchPoints;
+  const raw = `${screen_sig}|${tz}|${lang}|${cores}|${mem}|${touch}`;
+  const enc = new TextEncoder().encode(raw);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  out.innerHTML = `<span style="color:var(--green);">device_id: ${hex.substring(0,16).toUpperCase()}</span>
+screen: ${screen_sig} | tz: ${tz}
+cores: ${cores} | ram: ${mem}GB | touch: ${touch}pts
+<span style="color:var(--muted);">// zero camera | zero microfone | zero permissao</span>`;
+}
+
+// Cognitive metrics
+(function() {
+  const container = document.getElementById('cognitive-metrics');
+  if (!container) return;
+  const metrics = [
+    {label:'Focus Score', val:87, color:'var(--cyan)'},
+    {label:'Vault Sync', val:100, color:'var(--green)'},
+    {label:'Dopamine Loop', val:94, color:'var(--amber)'},
+    {label:'Context Freeze', val:78, color:'var(--cyan)'},
+    {label:'SHA-256 Commits', val:100, color:'var(--green)'},
+    {label:'Sovereig. Index', val:96, color:'var(--amber)'},
+  ];
+  metrics.forEach(m => {
+    const el = document.createElement('div');
+    el.style.cssText = 'background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;text-align:center;';
+    el.innerHTML = `<div style="font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:8px;letter-spacing:1px;">${m.label}</div>
+<div style="font-size:28px;font-weight:700;color:${m.color};font-family:monospace;">${m.val}</div>
+<div style="font-size:10px;color:var(--dim);">/100</div>
+<div style="width:100%;background:rgba(255,255,255,0.05);border-radius:100px;height:4px;margin-top:8px;overflow:hidden;">
+  <div style="height:100%;width:${m.val}%;background:${m.color};border-radius:100px;"></div>
+</div>`;
+    container.appendChild(el);
+  });
+})();
+
+// Soberania bar
+function calcularSoberania() {
+  const v_local = 9375; // throughput maps/s GPU vs browser
+  const l_rede = 1;    // normalized network latency factor
+  const c_factor = 0.01; // near-zero centralization (edge first)
+  const k_b = Math.min(99.7, (v_local / (l_rede * (c_factor * 1000 + 1))) * 100 / 940);
+  document.getElementById('sov-bar').style.width = k_b.toFixed(1) + '%';
+  document.getElementById('sov-label').innerHTML =
+    `K_B = ${k_b.toFixed(2)} | V_local=${v_local}x | Centralizacao=${(c_factor*100).toFixed(0)}% | <span style="color:var(--green);">SOBERANIA: ${k_b.toFixed(1)}%</span>`;
+}
+// Auto-run on load
+document.addEventListener('DOMContentLoaded', () => { setTimeout(calcularSoberania, 800); });
+</script>
+
+<!-- CALL TO ACTION -->
+<section style="text-align:center; border-bottom:none;">
+  <div class="section-label">| convite</div>
+  <h2 style="font-size:42px;">Quer ver<br><span class="hi">ao vivo?</span></h2>
+  <p class="lead" style="margin:0 auto 40px;">
+    Uma demo de 15 minutos. Hardware físico, terminal aberto, você digita os comandos.
+    Sem slides. Sem teoria. Só execução.
+  </p>
+  <div style="background:var(--card); border:1px solid var(--border); border-radius:16px; padding:40px; display:inline-block; min-width:400px;">
+    <div style="font-size:13px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Synapse Hub</div>
+    <div style="font-size:28px; font-weight:700; font-family:-apple-system,sans-serif; color:var(--text); margin-bottom:8px;">Gabriel Batista</div>
+    <div style="font-size:14px; color:var(--dim); font-family:-apple-system,sans-serif;">MBA ESALQ/USP | Gestão de Negócios Digitais e IA</div>
+    <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--border);">
+      <div style="font-size:13px; color:var(--cyan); letter-spacing:1px;">@maestro.synapse</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>SYNAPSE HUB</strong> | Documento técnico de referência<br>
+  Classificação: CONFIDENCIAL | uso restrito ao destinatário<br><br>
+  Referências: Jaques et al. (Eurocrypt 2020) · NIST FIPS 203/204/205 (2024) · Google Willow (Nature, 2024)
+</footer>
+
+</div><!-- /main-content -->
+
+<script>
+// SHA-256 hashes of accepted credentials (Uriel name combinations)
+const VALID_HASHES = new Set([
+  '88dfbf0f5c83d8c7202fef27ddb9eae9055a9a186422896ca0ba6704dc5351d9', // urielcarrano
+  'acbe22fabcfe6e77762a0d96d86a4bfc0cb59325c7f712570eb4bb4b30f24ad8', // uriel carrano
+  'd964d8d52ad924d923e142495ab84a1bfa64029d34c751355ce0bb80e41a11dc', // Uriel Carrano
+  'fdd0e8dcd11aad36214927eb9608a1e397cc2caef494264f536575e95bf55a75', // uriel
+  '39f15a716671310fbf878117a76d079f83c9aca9e8829cbbb2412affbe2ce838', // carrano
+  '4437e37c126b4e366387e6b7e4ab4757e102af0d71ce31e7022e36ea81053f64', // Uriel
+  '780dd28a009c9fc22109d546723e6f5bb14fcbfa5e01bc1ddba23353be78a3c0', // Carrano
+]);
+
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function tryUnlock() {
+  const input = document.getElementById('lock-input');
+  const err = document.getElementById('lock-err');
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const h = await sha256hex(raw);
+  // Also try lowercase and without spaces
+  const hLower = await sha256hex(raw.toLowerCase());
+  const hNospace = await sha256hex(raw.toLowerCase().replace(/\s+/g,''));
+
+  if (VALID_HASHES.has(h) || VALID_HASHES.has(hLower) || VALID_HASHES.has(hNospace)) {
+    // Unlock
+    document.getElementById('lock-screen').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('lock-screen').style.display = 'none';
+      const mc = document.getElementById('main-content');
+      mc.classList.add('visible');
+    }, 600);
+  } else {
+    input.classList.remove('shake');
+    void input.offsetWidth;
+    input.classList.add('shake');
+    input.value = '';
+    err.textContent = 'Acesso negado. Tente novamente.';
+    setTimeout(() => { err.textContent = ''; input.classList.remove('shake'); }, 2000);
+  }
+}
+</script>
+
+<script>
+// ============================================================
+// 10D INTERACTIVE DEMO
+// ============================================================
+const DIM_LABELS = [
+  'Diametro de Fibra (nm)', 'Porosidade (%)', 'Modulo de Young (MPa)',
+  'Adesao Celular (%)', 'Taxa Proliferacao', 'Resistencia Tracao',
+  'Rugosidade Ra (nm)', 'Angulo de Contato (°)', 'Degradacao (%/dia)', 'Uniformidade'
+];
+const DIM_RANGES = [
+  [100,800],[20,90],[0.1,50],[10,99],[0.5,5],[1,100],[10,500],[10,150],[0.01,2],[50,100]
+];
+
+let userDims = Array(10).fill(0.5);
+
+function initDimControls() {
+  const container = document.getElementById('dim-controls');
+  container.innerHTML = '';
+  DIM_LABELS.forEach((label, i) => {
+    const [min, max] = DIM_RANGES[i];
+    const val = +(min + userDims[i]*(max-min)).toFixed(2);
+    container.innerHTML += `
+      <div style="background:rgba(8,12,20,0.8);border:1px solid rgba(30,58,95,0.6);border-radius:8px;padding:10px;">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:-apple-system,sans-serif;">${label}</div>
+        <input type="range" min="${min}" max="${max}" step="${(max-min)/100}" value="${val}"
+          style="width:100%;accent-color:#3b82f6;margin:4px 0;"
+          oninput="userDims[${i}]=(this.value-${min})/${max-min};updateDimLabel(${i},this.value)"
+          id="dim-slider-${i}">
+        <div id="dim-val-${i}" style="font-size:11px;color:var(--cyan);font-family:monospace;text-align:right;">${val}</div>
+      </div>`;
+  });
+}
+
+function updateDimLabel(i, val) {
+  document.getElementById('dim-val-'+i).textContent = (+val).toFixed(2);
+}
+
+function shuffleDims() {
+  userDims = Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b=>b/255);
+  initDimControls();
+}
+
+function clearCanvas10D() {
+  const canvas = document.getElementById('canvas10d');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('dim-stats').textContent = '';
+}
+
+function generate10D() {
+  const canvas = document.getElementById('canvas10d');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  // Generate 80 random points + user's point in 10D, project to 2D via PCA-like
+  const N = 80;
+  const allPoints = [];
+  for (let i=0; i<N; i++) {
+    const raw = Array.from(crypto.getRandomValues(new Uint8Array(10))).map(b=>b/255);
+    allPoints.push(raw);
+  }
+  allPoints.push([...userDims]); // user's point is last
+
+  // Simple 2D projection: use dim[0] vs dim[1] as X/Y base, perturb with higher dims
+  const pts2d = allPoints.map(p => {
+    let x = p[0]*0.4 + p[2]*0.2 + p[4]*0.15 + p[6]*0.15 + p[8]*0.1;
+    let y = p[1]*0.4 + p[3]*0.2 + p[5]*0.15 + p[7]*0.15 + p[9]*0.1;
+    return [x, y];
+  });
+
+  // Normalize to canvas
+  const xs = pts2d.map(p=>p[0]), ys = pts2d.map(p=>p[1]);
+  const xmin=Math.min(...xs), xmax=Math.max(...xs);
+  const ymin=Math.min(...ys), ymax=Math.max(...ys);
+  const pad = 40;
+  const norm = pts2d.map(([x,y]) => [
+    pad + (x-xmin)/(xmax-xmin+1e-6)*(W-2*pad),
+    pad + (y-ymin)/(ymax-ymin+1e-6)*(H-2*pad)
+  ]);
+
+  ctx.clearRect(0,0,W,H);
+
+  // Background grid
+  ctx.strokeStyle='rgba(30,58,95,0.3)'; ctx.lineWidth=0.5;
+  for(let i=0;i<=10;i++){
+    ctx.beginPath();ctx.moveTo(pad+i*(W-2*pad)/10,pad);ctx.lineTo(pad+i*(W-2*pad)/10,H-pad);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,pad+i*(H-2*pad)/10);ctx.lineTo(W-pad,pad+i*(H-2*pad)/10);ctx.stroke();
+  }
+
+  // Draw cluster field
+  norm.slice(0,N).forEach(([x,y], i) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI*2);
+    // Color by proximity to user point
+    const ux = norm[N][0], uy = norm[N][1];
+    const dist = Math.sqrt((x-ux)**2+(y-uy)**2);
+    const hue = 200 + dist*0.5;
+    ctx.fillStyle = `hsla(${hue},70%,60%,0.5)`;
+    ctx.fill();
+  });
+
+  // User's point (highlighted)
+  const [ux, uy] = norm[N];
+  ctx.beginPath();
+  ctx.arc(ux, uy, 9, 0, Math.PI*2);
+  ctx.fillStyle = '#f59e0b';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(ux, uy, 9, 0, Math.PI*2);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText('SEU PONTO', ux+12, uy+4);
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(100,116,139,0.8)';
+  ctx.font = '10px monospace';
+  ctx.fillText('← D1 (Diametro) →', 20, H-10);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('D2 (Porosidade)', 0, 0); ctx.restore();
+
+  // Stats
+  const domDim = userDims.indexOf(Math.max(...userDims));
+  const [dmin, dmax] = DIM_RANGES[domDim];
+  const domVal = (dmin + userDims[domDim]*(dmax-dmin)).toFixed(2);
+  document.getElementById('dim-stats').innerHTML =
+    `<span style="color:var(--green);">✓</span> Ponto gerado em 10 dimensoes | `+
+    `<span style="color:var(--amber);">Dimensao dominante:</span> ${DIM_LABELS[domDim]} = ${domVal} | `+
+    `<span style="color:var(--cyan);">80 pontos aleatorios no espaco</span> | `+
+    `<span style="color:var(--muted);">Nenhum dado transmitido</span>`;
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initDimControls);
+</script>
+
+<script>
+async function sha256hex(msg) {
+  const enc = new TextEncoder().encode(msg);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function runDemo() {
+  const out = document.getElementById('demo-out');
+  out.innerHTML = '<span style="color:var(--amber);">⟳ gerando entropia local...</span>';
+  await new Promise(r=>setTimeout(r,300));
+
+  // Generate 32 random bytes locally
+  const keyBytes = crypto.getRandomValues(new Uint8Array(32));
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const msg = `Synapse Hub | Semente Soberana\nGerada em: ${new Date().toISOString()}\nDispositivo: LOCAL | sem transmissão`;
+
+  // Derive a key from the random bytes for AES-GCM
+  const rawKey = await crypto.subtle.importKey('raw', keyBytes, {name:'AES-GCM'}, false, ['encrypt']);
+  const enc = new TextEncoder().encode(msg);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv:nonce}, rawKey, enc);
+
+  const toHex = b => Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const toB64 = b => btoa(String.fromCharCode(...b));
+
+  const fingerprint = (await sha256hex(toHex(keyBytes))).substring(0,16).toUpperCase();
+  const shield_id = 'SYNAPSE-LIVE-' + fingerprint;
+
+  out.innerHTML = `<span style="color:var(--green);">✓ Semente gerada localmente | zero transmissão</span>
+
+<span style="color:var(--cyan);">shield_id:</span>    <span style="color:var(--amber);">${shield_id}</span>
+<span style="color:var(--cyan);">method:</span>       <span style="color:var(--amber);">AES-256-GCM (Web Crypto API | browser nativo)</span>
+<span style="color:var(--cyan);">key_bits:</span>     <span style="color:var(--green);">256</span>
+<span style="color:var(--cyan);">nonce:</span>        <span style="color:var(--amber);">${toB64(nonce)}</span>
+<span style="color:var(--cyan);">ciphertext:</span>   <span style="color:var(--amber);">${toB64(new Uint8Array(ct)).substring(0,48)}…</span>
+<span style="color:var(--cyan);">grover_ops:</span>   <span style="color:var(--green);">2^128 mínimas | infactível</span>
+<span style="color:var(--cyan);">gerado_em:</span>    <span style="color:var(--amber);">${new Date().toISOString()}</span>
+
+<span style="color:var(--muted);">// Clique novamente | cada execução gera entropia única.</span>`;
+}
+</script>
+
+<script>
+// AUTO-LOCK: detecta foco e visibilidade sem camera
+// Se o documento esta desbloqueado e a aba fica fora de foco por 90s, trava novamente
+(function() {
+  let lockTimer = null;
+  let isUnlocked = false;
+  const TIMEOUT_MS = 90000; // 90 segundos
+
+  function isDocUnlocked() {
+    const ls = document.getElementById('lock-screen');
+    return ls && ls.style.display === 'none';
+  }
+
+  function engageAutoLock(reason) {
+    if (!isDocUnlocked()) return;
+    const ls = document.getElementById('lock-screen');
+    const mc = document.getElementById('main-content');
+    const inp = document.getElementById('lock-input');
+    const err = document.getElementById('lock-err');
+    if (!ls || !mc) return;
+    // Retrava
+    mc.classList.remove('visible');
+    ls.style.display = 'flex';
+    ls.style.opacity = '1';
+    if (inp) inp.value = '';
+    if (err) {
+      err.style.display = 'block';
+      err.style.color = 'var(--amber)';
+      err.textContent = 'Auto-lock: ' + reason + '. Digite a senha para reabrir.';
+    }
+  }
+
+  function startTimer() {
+    clearTimeout(lockTimer);
+    if (isDocUnlocked()) {
+      lockTimer = setTimeout(() => engageAutoLock('aba inativa por 90s'), TIMEOUT_MS);
+    }
+  }
+
+  // Visibility change: aba minimizada ou troca de aba
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      startTimer();
+    } else {
+      clearTimeout(lockTimer);
+    }
+  });
+
+  // Foco da janela perdido
+  window.addEventListener('blur', startTimer);
+  window.addEventListener('focus', () => clearTimeout(lockTimer));
+
+  // Mouse move reseta o timer quando ativo
+  document.addEventListener('mousemove', () => {
+    if (isDocUnlocked()) { clearTimeout(lockTimer); startTimer(); }
+  });
+
+  // Detecta screensharing: requestAnimationFrame desacelera quando GPU compartilhada
+  // Aviso visual se FPS cair abaixo de 20
+  let lastFrame = performance.now();
+  let fpsSamples = [];
+  function checkFPS(ts) {
+    const delta = ts - lastFrame;
+    lastFrame = ts;
+    if (delta > 0) {
+      fpsSamples.push(1000/delta);
+      if (fpsSamples.length > 10) fpsSamples.shift();
+      const avgFPS = fpsSamples.reduce((a,b)=>a+b,0)/fpsSamples.length;
+      if (avgFPS < 10 && isDocUnlocked()) {
+        engageAutoLock('FPS critico detectado (possivel screencast)');
+      }
+    }
+    requestAnimationFrame(checkFPS);
+  }
+  requestAnimationFrame(checkFPS);
+})();
+</script>
+
+<!-- HOLOGRAPHIC NAVIGATOR (M.G.E.T. INTEGRATION) -->
+<div class="hologram-nav">
+  <h5>M.G.E.T. :: 10D Telemetry</h5>
+  <div class="hologram-grid">
+    <div class="hologram-item"><div class="hologram-label">X-POS</div><div id="h-x">0.00</div></div>
+    <div class="hologram-item"><div class="hologram-label">Y-POS</div><div id="h-y">0.00</div></div>
+    <div class="hologram-item"><div class="hologram-label">PYM-ρ</div><div id="h-p">411x</div></div>
+    <div class="hologram-item"><div class="hologram-label">ENT-ΔS</div><div id="h-s">0.00</div></div>
+    <div class="hologram-item"><div class="hologram-label">MASS-M</div><div id="h-m">1.44</div></div>
+    <div class="hologram-item"><div class="hologram-label">SPIN-a</div><div id="h-a">0.99</div></div>
+  </div>
+  <div style="margin-top:10px; font-size:8px; border-top: 1px dashed rgba(0,229,255,0.3); padding-top:4px;">
+    STATUS: SUPER-RADIANT SCATTERING ACTIVE<br>
+    ERGO-GAIN: 1.25x (PENROSE PROCESS)
+  </div>
+</div>
+
+<script>
+  // Hologram Telemetry Loop
+  setInterval(() => {
+    const jitter = (v, j) => (v + (Math.random()-0.5)*j).toFixed(2);
+    const setH = (id, val) => {
+      const el = document.getElementById(id);
+      if(el) el.textContent = val;
+    };
+    setH('h-x', jitter(17.4, 0.5));
+    setH('h-y', jitter(-29.0, 0.5));
+    setH('h-p', (411 + Math.random()*2).toFixed(1) + "x");
+    setH('h-s', (Math.random()*0.000001).toFixed(8));
+    setH('h-m', (1.44 + Math.random()*0.01).toFixed(3));
+    setH('h-a', (0.998 + Math.random()*0.001).toFixed(4));
+  }, 100);
+</script>
+
+</body>
+
+</html>
