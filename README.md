@@ -1,13 +1,8 @@
 # 🛠️ [SYSTEM-CORE] NanoMythos v1.98M-Pym
 
-```text
-  __  __                                 _            _     _                     
- |  \/  |  __ _  _ __    ___   _ __    | |__   _   _ | |_  | |__    ___   ___     
- | |\/| | / _` || '_ \  / _ \ | '_ \   | '_ \ | | | || __| | '_ \  / _ \ / __|    
- | |  | || (_| || | | || (_) || |_) |  | | | || |_| || |_  | | | || (_) |\__ \    
- |_|  |_| \__,_||_| |_| \___/ | .__/   |_| |_| \__,_| \__| |_| |_| \___/ |___/    
-                              |_|                                                 
-```
+<div align="center">
+  <img src="./assets/nanomythos_ultrathink_final.png" alt="NanoMythos Ultrathink Header" width="800">
+</div>
 
 > **Status:** Running Locally (Edge AI)
 > **Timeline Anchor:** 2026.06.22
