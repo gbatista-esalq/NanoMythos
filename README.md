@@ -94,21 +94,33 @@ git clone https://github.com/gbatista-esalq/NanoMythos.git
 cd NanoMythos
 ```
 
-### 2. A Interface Ultradopamina
+### 2. Instalação das Dependências
+Instale os pacotes mínimos necessários (como `pytest`) para rodar os testes da Borda:
+```bash
+pip install -r requirements.txt
+```
+
+### 3. A Interface Ultradopamina
 Abra a interface local que pulsarará em **11.11 Hz** (A Corda de Cantor):
 No seu navegador, abra o arquivo `ui/crom_rpg_dashboard.html`. 
 *(Note as partículas de bio-luminescência e o design Sincronia Brasil).*
 
-### 3. Executando o Salto Quântico Pym
+### 4. Inicializando a Caixa Forte (Fio da Realidade)
+Antes de saltar, o sistema precisa ancorar o seu banco de dados SQLite local. Isso garante que seus cálculos não dependam da nuvem. Crie a sua malha local:
+```bash
+python3 core/fio_da_realidade_db.py
+```
+*Isso criará a pasta `vault/` (blindada pelo `.gitignore`) com o seu banco operante.*
+
+### 5. Executando o Salto Quântico Pym
 Para injetar as métricas físicas (Entropia e Energia Batista) e ativar o **Sovereign Auditor**:
 ```bash
 python3 core/salto_dimensional_pym.py
 ```
 O console acusará a injeção da entropia matemática e registrará o livro-razão no seu terminal, provando que o salto ocorreu localmente.
 
-### 4. Validação (TDD Quântico)
+### 6. Validação (TDD Quântico)
 Rode a nossa suíte de blindagem (O Escudo de Seraphim) para garantir que a sua máquina não sofra vazamento para a nuvem:
 ```bash
-pip install pytest
 PYTHONPATH=. pytest tests/test_escudo_seraphim.py
 ```

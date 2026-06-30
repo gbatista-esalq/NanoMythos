@@ -1,0 +1,22 @@
+# Ambientes Python e Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv/
+env.bak/
+venv.bak/
+
+# Banco de Dados (Soberania de Borda - Não expor)
+*.sqlite3
+*.db
+vault/
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
