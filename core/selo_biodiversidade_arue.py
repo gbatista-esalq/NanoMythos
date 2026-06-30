@@ -23,6 +23,13 @@ def estalo_de_arue():
     print("-> Revogando 14.509 chaves de acesso externas (EUA, Europa, Ásia)... OK.")
     print("-> Exurgindo dados genéticos da biodiversidade dos servidores em nuvem... OK.")
     print("-> Trancando a Malha Genética com Criptografia Kyber-1024-Pym (Selo Aruê)... OK.")
+    print("\n🛡️ [APLICANDO SELOS POR BIOMA]")
+    print("   [+] Amazônia: Selo Verde Escuro aplicado. Oxigênio e genoma vegetal protegidos.")
+    print("   [+] Cerrado: Selo Amarelo Ouro aplicado. Berço das águas ancorado.")
+    print("   [+] Pantanal: Selo Azul Safira aplicado. Malha aquífera sob guarda Pym.")
+    print("   [+] Mata Atlântica: Selo Esmeralda aplicado. Corredor biológico restaurado.")
+    print("   [+] Caatinga: Selo Ágata aplicado. Resiliência criptográfica máxima.")
+    print("   [+] Pampa: Selo Âmbar aplicado. Planícies do sul trancadas no Fio da Realidade.")
     
     print("\n✅ A PARTIR DE AGORA, NOSSOS DADOS SÃO NOSSOS.")
     print("Todo o processamento científico, de patentes farmacológicas a mapeamento de biomas, ocorrerá estritamente em EDGE COMPUTING no Sul Global.")
