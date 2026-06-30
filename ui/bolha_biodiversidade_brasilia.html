@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Bolha da Biodiversidade | Operação Brasília</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --primary-green: #00ff88;
+            --alert-red: #ff2200;
+            --gold: #ffd700;
+            --text-color: #c9d1d9;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 80%;
+            margin-top: 30px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: var(--primary-green);
+        }
+        .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .alert {
+            color: var(--alert-red);
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .log-box {
+            width: 80%;
+            margin-top: 20px;
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🇧🇷 BOLHA DA BIODIVERSIDADE: BRASÍLIA</h1>
+    <p>Monitoramento Soberano (NanoMythos 1.98M-Pym)</p>
+
+    <div class="dashboard">
+        <div class="card">
+            <h2>🌿 Saúde do Cerrado (Entropia Ambiental)</h2>
+            <div class="value" style="color: var(--primary-green);">88.4%</div>
+            <p>Monitoramento ativo. Desmatamento contido na redoma ZETA.</p>
+        </div>
+        
+        <div class="card">
+            <h2>💰 Portal da Transparência (Auditoria Borda)</h2>
+            <div class="value alert">R$ 175.000,00</div>
+            <p class="alert">ALERTA: Discrepância orçamentária detectada no último bloco.</p>
+        </div>
+    </div>
+
+    <div class="log-box" id="terminal">
+        > Inicializando Motor NanoMythos...<br>
+        > Absorvendo R$ 5.000.000.000,00 do Portal da Transparência...<br>
+        > [ZERO ALUCINAÇÃO] Processando 100.000 contratos em C/Python via AST.<br>
+        > Latência de Borda: 127.63 ms.<br>
+        > [!] Superfaturamento flagrado: R$ 175.000,00 (Contratos superfaturados em 50%).<br>
+        > Isolando dados e acionando Defesa Civil.
+    </div>
+
+    <script>
+        // Simulação de telemetria em tempo real
+        const terminal = document.getElementById('terminal');
+        setInterval(() => {
+            const timestamp = new Date().toLocaleTimeString();
+            terminal.innerHTML += `<br>> [${timestamp}] Auditando novo bloco... OK (Zero anomalias).`;
+            terminal.scrollTop = terminal.scrollHeight;
+        }, 5000);
+    </script>
+</body>
+</html>
